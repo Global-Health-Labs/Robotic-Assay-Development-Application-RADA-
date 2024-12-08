@@ -2,6 +2,8 @@ import SigninPage from '@/pages/auth/SigninPage';
 import ExperimentsPage from '@/pages/experiments/ExperimentsPage';
 import CreateExperimentForm from '@/pages/experiments/ExperimentPlanDetailsPage';
 import MastermixPage from '@/pages/experiments/MastermixPage';
+import ExperimentExportPage from '@/pages/experiments/ExperimentExportPage';
+import RoboInstructionViewerPage from '@/pages/experiments/RoboInstructionViewerPage';
 // import SignupPage from '@/pages/auth/SignupPage'
 // import EmailSentPage from '@/pages/auth/EmailSentPage'
 // import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
@@ -78,6 +80,16 @@ export const protectedRoutes: RouteConfig[] = [
   {
     path: '/experiments/:id/mastermix',
     component: MastermixPage,
+    protected: true,
+  },
+  {
+    path: '/experiments/:id/export',
+    component: ExperimentExportPage,
+    protected: true,
+  },
+  {
+    path: '/experiments/:id/instructions',
+    component: RoboInstructionViewerPage,
     protected: true,
   },
   // {

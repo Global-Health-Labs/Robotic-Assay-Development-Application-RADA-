@@ -1,4 +1,12 @@
 import React from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from './dialog'
 
 interface DialogModalProps {
   isOpen: boolean
@@ -15,14 +23,14 @@ const DialogModal: React.FC<DialogModalProps> = ({
   onCancel,
   onContinue,
 }) => {
-  if (!isOpen) return null
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 w-[400px]">
-        <h2 className="text-xl font-bold mb-4">{title}</h2>
-        <p className="text-gray-600 mb-6">{message}</p>
-        <div className="flex justify-end gap-4">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{message}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
           <button
             onClick={onCancel}
             className="px-4 py-2 text-gray-600 hover:text-gray-800"
@@ -35,9 +43,9 @@ const DialogModal: React.FC<DialogModalProps> = ({
           >
             Continue
           </button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

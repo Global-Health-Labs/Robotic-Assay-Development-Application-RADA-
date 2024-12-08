@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import React from 'react';
 import { MastermixDetails } from './MastermixDetails';
 
@@ -83,29 +82,35 @@ export function MastermixTable({
 }: MastermixTableProps) {
   const [validMastermixes, setValidMastermixes] = React.useState<Set<string>>(new Set());
 
-  const updateMastermix = (updatedMastermix: Mastermix) => {
-    // Check if this is a clone operation (new ID)
-    const isClone = !mastermixes.find((mm) => mm.id === updatedMastermix.id);
+  const updateMastermix = React.useCallback(
+    (updatedMastermix: Mastermix) => {
+      // Check if this is a clone operation (new ID)
+      const isClone = !mastermixes.find((mm) => mm.id === updatedMastermix.id);
 
-    if (isClone) {
-      onChange([...mastermixes, updatedMastermix]);
-    } else {
-      onChange(mastermixes.map((mm) => (mm.id === updatedMastermix.id ? updatedMastermix : mm)));
-    }
-  };
+      if (isClone) {
+        onChange([...mastermixes, updatedMastermix]);
+      } else {
+        onChange(mastermixes.map((mm) => (mm.id === updatedMastermix.id ? updatedMastermix : mm)));
+      }
+    },
+    [mastermixes, onChange]
+  );
 
-  const removeMastermix = (mastermixId: string) => {
-    const updatedMastermixes = mastermixes.filter((mm) => mm.id !== mastermixId);
-    onChange(updatedMastermixes);
-    setValidMastermixes((prev) => {
-      const next = new Set(prev);
-      next.delete(mastermixId);
-      return next;
-    });
-  };
+  const removeMastermix = React.useCallback(
+    (mastermixId: string) => {
+      const updatedMastermixes = mastermixes.filter((mm) => mm.id !== mastermixId);
+      onChange(updatedMastermixes);
+      setValidMastermixes((prev) => {
+        const next = new Set(prev);
+        next.delete(mastermixId);
+        return next;
+      });
+    },
+    [mastermixes, onChange]
+  );
 
   // Handle validation status changes for individual mastermixes
-  const handleMastermixValidation = (mastermixId: string, isValid: boolean) => {
+  const handleMastermixValidation = React.useCallback((mastermixId: string, isValid: boolean) => {
     setValidMastermixes((prev) => {
       const next = new Set(prev);
       if (isValid) {
@@ -115,20 +120,13 @@ export function MastermixTable({
       }
       return next;
     });
+  }, []);
 
-    // Update overall validation status immediately
-    const updatedValidMastermixes = new Set(validMastermixes);
-    if (isValid) {
-      updatedValidMastermixes.add(mastermixId);
-    } else {
-      updatedValidMastermixes.delete(mastermixId);
-    }
-    
-    const allValid = mastermixes.every((mm) => 
-      mm.id === mastermixId ? isValid : updatedValidMastermixes.has(mm.id)
-    );
+  // Update overall validation status when validMastermixes changes
+  React.useEffect(() => {
+    const allValid = mastermixes.every((mm) => validMastermixes.has(mm.id));
     onValidationChange(allValid);
-  };
+  }, [validMastermixes, mastermixes, onValidationChange]);
 
   return (
     <div className="space-y-8">
@@ -139,7 +137,7 @@ export function MastermixTable({
           showValidation={isSubmitted}
           onUpdate={updateMastermix}
           onDelete={() => removeMastermix(mastermix.id)}
-          onValidationChange={(isValid) => handleMastermixValidation(mastermix.id, isValid)}
+          onValidationChange={handleMastermixValidation}
         />
       ))}
     </div>

@@ -1,66 +1,62 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { getProfileRequest } from '../api/auth.api'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getProfileRequest } from '../api/auth.api';
 
 interface AuthContextType {
-  isAuthenticated: boolean
-  setIsAuthenticated: (value: boolean) => void
-  isLoading: boolean
-  logout: () => void
-  name: string
-  role: string
-  fetchUserProfile: () => Promise<void>
+  isAuthenticated: boolean;
+  setIsAuthenticated: (value: boolean) => void;
+  isLoading: boolean;
+  logout: () => void;
+  name: string;
+  role: string;
+  fetchUserProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [name, setName] = useState('')
-  const [role, setRole] = useState('')
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('');
 
   const logout = () => {
-    window.localStorage.removeItem('token')
-    setIsAuthenticated(false)
-  }
+    window.localStorage.removeItem('token');
+    setIsAuthenticated(false);
+  };
 
   const fetchUserProfile = async () => {
-    setIsLoading(true)
-    const token = window.localStorage.getItem('token')
+    setIsLoading(true);
+    const token = window.localStorage.getItem('token');
     if (!token) {
-      setIsAuthenticated(false)
-      setIsLoading(false)
-      return
+      setIsAuthenticated(false);
+      setIsLoading(false);
+      return;
     }
 
     try {
-      const response = await getProfileRequest()
-      if (
-        response.status === 200 &&
-        response.data &&
-        response.data.user.confirmed
-      ) {
-        setName(response.data.user.fullName?.split(' ')[0] || '')
-        setRole(response.data.user.role)
-        setIsAuthenticated(true)
+      const response = await getProfileRequest();
+      if (response.status === 200 && response.data && response.data.user.confirmed) {
+        setName(response.data.user.fullName || '');
+        setRole(response.data.user.role);
+        setIsAuthenticated(true);
       } else {
-        setIsAuthenticated(false)
+        setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Authentication verification failed', error)
-      setIsAuthenticated(false)
+      console.error('Authentication verification failed', error);
+      setIsAuthenticated(false);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchUserProfile()
-  }, [])
+    fetchUserProfile();
+  }, []);
 
   const value = {
     isAuthenticated,
@@ -70,15 +66,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     name,
     role,
     fetchUserProfile,
-  }
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
+  return context;
 }

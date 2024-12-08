@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -7,153 +8,233 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DROPDOWN_OPTIONS } from '@/config/FormInputValues';
 import { cn } from '@/lib/utils';
+import { LIQUID_TYPE } from '@/utils/ExtractLiquidClass';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CopyPlus, Trash2Icon } from 'lucide-react';
-import React from 'react';
-import { ReagentValidation } from './ValidationSchema';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 
-interface Reagent {
-  id: string;
-  source: string;
-  unit: string;
+const LIQUID_TYPES = [
+  { label: 'Water', value: LIQUID_TYPE.WATER },
+  { label: 'Buffer', value: LIQUID_TYPE.BUFFER },
+  { label: 'Primers', value: LIQUID_TYPE.PRIMER },
+  { label: 'Enzymes', value: LIQUID_TYPE.ENZYMES },
+  { label: 'Template', value: LIQUID_TYPE.TEMPLATE },
+  { label: 'Organics', value: LIQUID_TYPE.ORGANICS },
+  { label: 'Detergent', value: LIQUID_TYPE.DETERGENT },
+  { label: 'Mastermix', value: LIQUID_TYPE._20uL_MM },
+];
+
+const CONCENTRATION_VALIDATION_MESSAGE =
+  'Final concentration must be less than or equal to stock concentration';
+
+const validateConcentration = ({
+  finalConcentration,
+  stockConcentration,
+}: {
   finalConcentration: number;
   stockConcentration: number;
-  liquidType: string;
-}
+}) => {
+  if (finalConcentration && stockConcentration) {
+    return finalConcentration <= stockConcentration;
+  }
+  return true;
+};
+
+const reagentSchema = z
+  .object({
+    source: z
+      .string({
+        required_error: 'Required',
+      })
+      .min(1, 'Required'),
+    unit: z
+      .string({
+        required_error: 'Required',
+      })
+      .min(1, 'Required'),
+    finalConcentration: z.coerce
+      .number({
+        required_error: 'Required',
+        invalid_type_error: 'Must be greater than 0',
+      })
+      .min(0.00001, 'Must be greater than 0')
+      .max(1000, 'Must be less than 1000')
+      .refine((val) => !isNaN(val), 'Required'),
+    stockConcentration: z.coerce
+      .number({
+        required_error: 'Required',
+        invalid_type_error: 'Must be greater than 0',
+      })
+      .min(0.00001, 'Must be greater than 0')
+      .max(1000, 'Must be less than 1000')
+      .refine((val) => !isNaN(val), 'Required'),
+    liquidType: z.string().min(1, 'Required'),
+  })
+  .refine(validateConcentration, {
+    message: CONCENTRATION_VALIDATION_MESSAGE,
+    path: ['finalConcentration'],
+  });
+
+type ReagentFormValues = z.infer<typeof reagentSchema>;
 
 interface ReagentDetailsProps {
-  reagent: Reagent;
-  canDelete: boolean;
-  errors?: ReagentValidation;
-  showValidation: boolean;
-  onUpdate: (field: keyof Reagent, value: string | number) => void;
-  onFieldBlur: (field: keyof Reagent) => void;
+  reagent: {
+    id: string;
+    source: string;
+    unit: string;
+    finalConcentration: number;
+    stockConcentration: number;
+    liquidType: string;
+  };
+  canDelete?: boolean;
+  onUpdate: (field: keyof ReagentFormValues, value: string | number) => void;
   onDelete: () => void;
   onClone: () => void;
+  onValidationChange: (isValid: boolean) => void;
 }
-
-const UNITS = ['µL', 'mL', 'µg', 'mg', 'ng'];
-const LIQUID_TYPES = ['Water', 'Buffer', 'Sample', 'Other'];
 
 export function ReagentDetails({
   reagent,
+  canDelete = true,
   onUpdate,
   onDelete,
   onClone,
-  onFieldBlur,
-  canDelete,
-  errors = {},
-  showValidation,
+  onValidationChange,
 }: ReagentDetailsProps) {
-  const [touchedFields, setTouchedFields] = React.useState<Set<keyof Reagent>>(new Set());
+  const form = useForm<ReagentFormValues>({
+    resolver: zodResolver(reagentSchema),
+    defaultValues: {
+      source: reagent.source,
+      unit: reagent.unit,
+      finalConcentration: reagent.finalConcentration,
+      stockConcentration: reagent.stockConcentration,
+      liquidType: reagent.liquidType,
+    },
+    mode: 'onChange',
+  });
 
-  const handleBlur = (field: keyof Reagent) => {
-    if (!touchedFields.has(field)) {
-      setTouchedFields((prev) => new Set([...prev, field]));
-    }
-    onFieldBlur(field);
-  };
+  useEffect(() => {
+    form.trigger().then((isValid) => {
+      onValidationChange(isValid);
+    });
+  }, []);
 
-  const handleChange = (field: keyof Reagent, value: string | number) => {
-    onUpdate(field, value);
-    if (touchedFields.has(field)) {
-      onFieldBlur(field);
-    }
-  };
+  // Watch form validation state and bubble up changes
+  useEffect(() => {
+    const subscription = form.watch((values, info) => {
+      if (info.name) {
+        onUpdate(info.name, values[info.name] as string | number);
+      }
 
-  const showError = (field: keyof ReagentValidation) => {
-    return (showValidation || touchedFields.has(field)) && errors[field];
-  };
+      if (info.name === 'finalConcentration' || info.name === 'stockConcentration') {
+        form.trigger('finalConcentration');
+      }
+
+      setTimeout(() => {
+        onValidationChange(form.formState.isValid);
+      }, 100);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, onValidationChange, onUpdate]);
 
   return (
-    <React.Fragment>
-      <div className="flex flex-col gap-1">
-        <Input
-          value={reagent.source}
-          onChange={(e) => handleChange('source', e.target.value)}
-          onBlur={() => handleBlur('source')}
-          className={cn('w-full', showError('source') && 'border-red-500')}
-        />
-        {showError('source') && <span className="text-xs text-red-500">{errors.source}</span>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <Select
-          value={reagent.unit}
-          onValueChange={(value) => {
-            handleChange('unit', value);
-            handleBlur('unit');
-          }}
-        >
-          <SelectTrigger className={cn(showError('unit') && 'border-red-500')}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {UNITS.map((unit) => (
-              <SelectItem key={unit} value={unit}>
-                {unit}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {showError('unit') && <span className="text-xs text-red-500">{errors.unit}</span>}
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <Input
-          type="number"
-          value={reagent.finalConcentration}
-          onChange={(e) => handleChange('finalConcentration', parseFloat(e.target.value))}
-          onBlur={() => handleBlur('finalConcentration')}
-          className={cn('w-full', showError('finalConcentration') && 'border-red-500')}
-        />
-        {showError('finalConcentration') && (
-          <span className="text-xs text-red-500">{errors.finalConcentration}</span>
+    <Form {...form} className="grid grid-cols-[2fr,1fr,1fr,1fr,1fr,auto] items-center gap-2">
+      <FormField
+        control={form.control}
+        name="source"
+        render={({ field }) => (
+          <FormItem>
+            <FormControl>
+              <Input {...field} placeholder="" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
-      </div>
+      />
 
-      <div className="flex flex-col gap-1">
-        <Input
-          type="number"
-          value={reagent.stockConcentration}
-          onChange={(e) => handleChange('stockConcentration', parseFloat(e.target.value))}
-          onBlur={() => handleBlur('stockConcentration')}
-          className={cn('w-full', showError('stockConcentration') && 'border-red-500')}
-        />
-        {showError('stockConcentration') && (
-          <span className="text-xs text-red-500">{errors.stockConcentration}</span>
+      <FormField
+        control={form.control}
+        name="unit"
+        render={({ field }) => (
+          <FormItem>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Unit" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {DROPDOWN_OPTIONS.UNITS.map((unit) => (
+                  <SelectItem key={unit} value={unit}>
+                    {unit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
         )}
-      </div>
+      />
 
-      <div className="flex flex-col gap-1">
-        <Select
-          value={reagent.liquidType}
-          onValueChange={(value) => {
-            handleChange('liquidType', value);
-            handleBlur('liquidType');
-          }}
-        >
-          <SelectTrigger className={cn(showError('liquidType') && 'border-red-500')}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {LIQUID_TYPES.map((type) => (
-              <SelectItem key={type} value={type}>
-                {type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {showError('liquidType') && (
-          <span className="text-xs text-red-500">{errors.liquidType}</span>
+      <FormField
+        control={form.control}
+        name="finalConcentration"
+        render={({ field }) => (
+          <FormItem>
+            <FormControl>
+              <Input {...field} placeholder="" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
-      </div>
+      />
 
-      <div>
+      <FormField
+        control={form.control}
+        name="stockConcentration"
+        render={({ field }) => (
+          <FormItem>
+            <FormControl>
+              <Input {...field} placeholder="" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="liquidType"
+        render={({ field }) => (
+          <FormItem>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {LIQUID_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="flex gap-1">
         <Button
           type="button"
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={onClone}
           className="bg-transparent"
           title="Copy reagent"
@@ -164,14 +245,15 @@ export function ReagentDetails({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={onDelete}
           className={cn('bg-transparent', !canDelete && 'pointer-events-none opacity-60')}
           title="Delete reagent"
+          disabled={!canDelete}
         >
           <Trash2Icon className="h-4 w-4 text-secondary" />
         </Button>
       </div>
-    </React.Fragment>
+    </Form>
   );
 }

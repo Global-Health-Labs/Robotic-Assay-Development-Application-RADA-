@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import DialogModal from './DialogModal';
-import RADALogoInverted from './RADALogoInverted';
 import { useAuth } from '../../context/AuthContext';
+import DialogModal from './DialogModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu';
+import RADALogoInverted from './RADALogoInverted';
+import { CircleUserRound } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 interface NavBarProps {
   name: string;
@@ -33,65 +45,62 @@ const NavBar: React.FC<NavBarProps> = ({ name, role }) => {
 
   return (
     <>
-      <div className="flex w-full items-center justify-between bg-muted px-20 py-3">
+      <div className="sticky top-0 z-10 flex w-full items-center justify-between bg-muted px-6 py-3 shadow-md md:px-20">
         <a href="/experiments">
-          <RADALogoInverted scale={0.2} />
+          <RADALogoInverted />
         </a>
         <div className="flex items-center gap-5">
-          <button
-            className={`Sans flex items-center justify-center gap-2.5 border-b-2 px-4 py-4 text-center ${
-              isActive('/experiments') || isActive('/')
-                ? 'border-[#121212] text-[#121212]'
-                : 'border-transparent text-[#121212]'
-            }`}
-            onClick={() => navigate('/experiments')}
-          >
-            Experiments
-          </button>
-          {role === 'admin' && (
+          <Link to="/experiments">
             <button
-              className={`Sans flex items-center justify-center gap-2.5 border-b-2 px-4 py-4 text-center ${
-                isActive('/roles-settings')
-                  ? 'border-[#121212] text-[#121212]'
-                  : 'border-transparent text-[#121212]'
-              }`}
-              onClick={() => navigate('/roles-settings')}
+              className={cn(
+                'hidden items-center justify-center border-b-2 px-4 py-2 text-center md:flex',
+                isActive('/experiments') ? 'border-primary' : 'border-transparent'
+              )}
+              onClick={() => navigate('/experiments')}
             >
-              Settings
+              Experiments
             </button>
+          </Link>
+          {role === 'admin' && (
+            <Link to="/roles-settings">
+              <button
+                className={cn(
+                  'hidden items-center justify-center border-b-2 px-4 py-2 text-center md:flex',
+                  isActive('/roles-settings') ? 'border-primary' : 'border-transparent'
+                )}
+                onClick={() => navigate('/roles-settings')}
+              >
+                Settings
+              </button>
+            </Link>
           )}
 
-          <button
-            className="Sans font-nunito flex items-center justify-center gap-2.5 border-b-2 border-transparent px-4 py-3 text-center leading-6 text-[#121212]"
-            onClick={handleLogout}
-          >
-            Log out
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="flex items-start gap-2.5 rounded-[1.25rem] border-2 border-[#121314] bg-white p-2">
-              <svg
-                width={24}
-                height={24}
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="focus:outline-none focus:ring-0 focus-visible:ring-0"
               >
-                <circle cx={12} cy={7} r={5} fill="#0E1420" />
-                <path
-                  d="M4 18.8C4 16.149 6.14903 14 8.8 14H15.2C17.851 14 20 16.149 20 18.8C20 20.5673 18.5673 22 16.8 22H7.2C5.43269 22 4 20.5673 4 18.8Z"
-                  fill="#0E1420"
-                />
-              </svg>
-            </div>
-            <div className="flex flex-col items-start">
-              <div className="Sans font-['nunito'] text-sm font-bold leading-5 text-[#121212]">
-                {name}
-              </div>
-              <div className="Sans font-['nunito'] text-xs font-semibold leading-[normal] text-[#121212]">
-                {role}
-              </div>
-            </div>
-          </div>
+                <CircleUserRound className="h-8 w-8" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{name}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{role}</span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <Link to="/experiments">
+                <DropdownMenuItem className="block md:hidden">Experiments</DropdownMenuItem>
+              </Link>
+              <Link to="/roles-settings">
+                <DropdownMenuItem className="block md:hidden">Settings</DropdownMenuItem>
+              </Link>
+              <DropdownMenuItem onSelect={handleLogout}>Log out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <DialogModal

@@ -1,22 +1,13 @@
 import React from 'react';
 
-interface RADALogoInvertedProps {
-  scale?: number;
-}
+interface RADALogoInvertedProps {}
 
-const RADALogoInverted: React.FC<RADALogoInvertedProps> = ({ scale = 1 }) => {
-  const originalWidth = 719;
-  const originalHeight = 308;
-
-  const scaledWidth = originalWidth * scale;
-  const scaledHeight = originalHeight * scale;
-
+const RADALogoInverted: React.FC<RADALogoInvertedProps> = () => {
   return (
     <svg
       version="1.0"
       xmlns="http://www.w3.org/2000/svg"
-      width={`${scaledWidth}pt`}
-      height={`${scaledHeight}pt`}
+      className="h-8 md:h-16"
       viewBox="0 0 719.000000 308.000000"
       preserveAspectRatio="xMidYMid meet"
     >

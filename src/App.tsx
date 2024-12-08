@@ -7,24 +7,24 @@ import { publicRoutes, protectedRoutes, hideNavBarRoutes } from './routes/routes
 import LoginForm from './pages/auth/SigninPage';
 import { QueryProvider } from './providers/query-provider';
 
+const NavBarWrapper: React.FC = () => {
+  const location = useLocation();
+  const { name, role } = useAuth();
+
+  if (hideNavBarRoutes.includes(location.pathname)) {
+    return null;
+  }
+  return <NavBar name={name} role={role} />;
+};
+
 function App() {
-  const NavBarWrapper: React.FC = () => {
-    const location = useLocation();
-    const { name, role } = useAuth();
-
-    if (hideNavBarRoutes.includes(location.pathname)) {
-      return null;
-    }
-    return <NavBar name={name} role={role} />;
-  };
-
   return (
     <AuthProvider>
       <QueryProvider>
         <Router>
-          <div className="h-screen w-screen">
+          <div>
             <NavBarWrapper />
-            <div className="px-20">
+            <div className="px-6 md:px-20">
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginForm />} />

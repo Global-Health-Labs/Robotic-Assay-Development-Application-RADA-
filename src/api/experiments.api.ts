@@ -1,4 +1,5 @@
 import axios from './axios';
+import { DispenseType } from '../utils/ExtractLiquidClass';
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -37,23 +38,46 @@ export type Experiment = {
 
 export interface Reagent {
   id: string;
-  source: string;
+  finalSource: string;
   unit: string;
   finalConcentration: number;
   stockConcentration: number;
   liquidType: string;
+  orderIndex: number;
+  mastermixId: string;
+  dispenseType: DispenseType;
+  tipWashing: 'Yes' | 'No';
 }
+
+// export interface Reagent {
+//   id: string;
+//   source: string;
+//   unit: string;
+//   finalConcentration: number;
+//   stockConcentration: number;
+//   liquidType: string;
+// }
+
+// export interface Mastermix {
+//   id: string;
+//   name: string;
+//   reagents: Reagent[];
+// }
 
 export interface Mastermix {
   id: string;
-  name: string;
-  reagents: Reagent[];
+  nameOfMasterMix: string;
+  recipes: Reagent[];
 }
 
 export interface ExperimentMastermix {
   experimentId: string;
   mastermixes: Mastermix[];
 }
+
+export type ExperimentWithMastermix = Experiment & {
+  masterMixes: Mastermix[];
+};
 
 export const getExperiments = async (filters: ExperimentFilters = {}) => {
   const params = new URLSearchParams();
@@ -70,7 +94,7 @@ export const getExperiments = async (filters: ExperimentFilters = {}) => {
 };
 
 export const getExperiment = (id: string) =>
-  axios.get<Experiment>(`/experiments/${id}`).then((res) => res.data);
+  axios.get<ExperimentWithMastermix>(`/experiments/${id}`).then((res) => res.data);
 
 export const createExperiment = (data: NewExperiment) =>
   axios.post<Experiment>('/experiments', data).then((res) => res.data);
@@ -90,3 +114,8 @@ export const updateMastermix = (data: ExperimentMastermix) =>
   axios
     .put<ExperimentMastermix>(`/experiments/${data.experimentId}/mastermix`, data)
     .then((res) => res.data);
+
+export const cloneExperiment = async (experimentId: string) => {
+  const response = await axios.post<Experiment>(`/experiments/${experimentId}/clone`);
+  return response.data;
+};

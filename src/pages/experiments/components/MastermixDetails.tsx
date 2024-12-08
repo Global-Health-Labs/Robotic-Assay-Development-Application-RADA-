@@ -7,10 +7,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Copy, Menu, Trash2 } from 'lucide-react';
-import React from 'react';
+import { Copy, CopyPlus, Menu, Plus, PlusCircle, Trash2 } from 'lucide-react';
+import React, { useEffect } from 'react';
 import { ReagentDetails } from './ReagentDetails';
-import { ReagentValidation, validateReagent } from './ValidationSchema';
+import { Separator } from '@/components/ui/separator';
 
 interface Reagent {
   id: string;
@@ -32,14 +32,14 @@ interface MastermixDetailsProps {
   showValidation: boolean;
   onUpdate: (mastermix: Mastermix) => void;
   onDelete: () => void;
-  onValidationChange?: (isValid: boolean) => void;
+  onValidationChange: (id: string, isValid: boolean) => void;
 }
 
 const COLUMN_HEADERS = [
   {
     title: 'Source',
     tooltip:
-      'The source is the name of the liquid. Examples of “source” include Water, Polymerase, dNTPs, etc.',
+      'The source is the name of the liquid. Examples of "source" include Water, Polymerase, dNTPs, etc.',
   },
   {
     title: 'Concentration unit',
@@ -70,37 +70,16 @@ export function MastermixDetails({
   onValidationChange,
   showValidation,
 }: MastermixDetailsProps) {
-  const [validationErrors, setValidationErrors] = React.useState<Record<string, ReagentValidation>>(
-    {}
-  );
+  // Track validation status of each reagent
+  const [reagentValidation, setReagentValidation] = React.useState<Record<string, boolean>>({});
+  const [nameValid, setNameValid] = React.useState(!!mastermix.name);
 
-  const validateMastermix = React.useCallback(() => {
-    const errors: Record<string, ReagentValidation> = {};
-    let hasErrors = false;
-
-    mastermix.reagents.forEach((reagent) => {
-      const reagentErrors = validateReagent(reagent);
-      if (Object.keys(reagentErrors).length > 0) {
-        errors[reagent.id] = reagentErrors;
-        hasErrors = true;
-      }
-    });
-
-    setValidationErrors(errors);
-    onValidationChange?.(!hasErrors);
-    return !hasErrors;
-  }, [mastermix.reagents, onValidationChange]);
-
-  // Validate on mount and when reagents change if showValidation is true
-  React.useEffect(() => {
-    if (showValidation) {
-      validateMastermix();
-    }
-  }, [validateMastermix, showValidation]);
-
-  const handleFieldBlur = () => {
-    validateMastermix();
-  };
+  // Update overall validation status whenever a reagent's validation changes
+  useEffect(() => {
+    const allReagentsValid = mastermix.reagents.every((reagent) => reagentValidation[reagent.id]);
+    const isValid = allReagentsValid && nameValid && mastermix.reagents.length > 0;
+    onValidationChange(mastermix.id, isValid);
+  }, [reagentValidation, nameValid, mastermix.reagents, mastermix.id, onValidationChange]);
 
   const updateReagent = (reagentId: string, field: keyof Reagent, value: string | number) => {
     const updatedMastermix = {
@@ -116,17 +95,15 @@ export function MastermixDetails({
         ...mastermix,
         reagents: mastermix.reagents.filter((r) => r.id !== reagentId),
       };
-      
+
       // Clean up validation state for removed reagent
-      setValidationErrors((prev) => {
+      setReagentValidation((prev) => {
         const next = { ...prev };
         delete next[reagentId];
         return next;
       });
 
-      // Update mastermix and trigger validation
       onUpdate(updatedMastermix);
-      onValidationChange?.(true); // Since we're removing an invalid reagent, the form should now be valid
     }
   };
 
@@ -134,6 +111,7 @@ export function MastermixDetails({
     const newReagent: Reagent = {
       ...reagent,
       id: crypto.randomUUID(),
+      source: `${reagent.source} (Copy)`,
     };
 
     const updatedMastermix = {
@@ -143,22 +121,34 @@ export function MastermixDetails({
     onUpdate(updatedMastermix);
   };
 
-  const cloneMastermix = () => {
-    const clonedReagents = mastermix.reagents.map((reagent) => ({
-      ...reagent,
+  const addReagent = () => {
+    const newReagent: Reagent = {
       id: crypto.randomUUID(),
-    }));
+      source: '',
+      unit: 'µL',
+      finalConcentration: '' as unknown as number,
+      stockConcentration: '' as unknown as number,
+      liquidType: 'Water',
+    };
 
-    const newMastermix: Mastermix = {
+    onUpdate({
+      ...mastermix,
+      reagents: [...mastermix.reagents, newReagent],
+    });
+  };
+
+  const cloneMastermix = () => {
+    const newMastermix = {
       ...mastermix,
       id: crypto.randomUUID(),
       name: `${mastermix.name} (Copy)`,
-      reagents: clonedReagents,
     };
-
-    // Since we can't directly add a new mastermix from this component,
-    // we'll emit it through onUpdate and let the parent handle it
     onUpdate(newMastermix);
+  };
+
+  const handleNameChange = (name: string) => {
+    setNameValid(!!name);
+    onUpdate({ ...mastermix, name });
   };
 
   return (
@@ -166,13 +156,18 @@ export function MastermixDetails({
       <div className="flex items-center justify-between">
         <div className="flex w-full items-center gap-2 bg-sky-50 px-4 py-2">
           <div className="flex flex-col gap-1">
-            <p className="text-xs font-medium text-muted-foreground">Mastermix Name</p>
+            <p className={cn('text-xs', nameValid ? 'text-muted-foreground' : 'text-destructive')}>
+              Mastermix Name
+            </p>
             <div className="flex gap-2">
               <Input
-                id={mastermix.id}
                 value={mastermix.name}
-                onChange={(e) => onUpdate({ ...mastermix, name: e.target.value })}
-                className="w-[200px] font-medium"
+                onChange={(e) => handleNameChange(e.target.value)}
+                className={cn(
+                  'w-[200px] font-medium placeholder:text-xs placeholder:font-normal placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0',
+                  showValidation && !nameValid && 'border-red-500'
+                )}
+                placeholder="Enter mastermix name..."
               />
             </div>
           </div>
@@ -184,10 +179,15 @@ export function MastermixDetails({
                   <Menu className="h-4 w-4 text-black" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="font-medium">
+              <DropdownMenuContent align="end" className="space-y-1">
+                <DropdownMenuItem onClick={addReagent} className="gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Add Reagent
+                </DropdownMenuItem>
+                <Separator />
                 <DropdownMenuItem onClick={cloneMastermix} className="gap-2">
-                  <Copy className="h-4 w-4" />
-                  Clone Mastermix
+                  <CopyPlus className="h-4 w-4" />
+                  Copy Mastermix
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onDelete} className="gap-2 font-medium text-destructive">
                   <Trash2 className="h-4 w-4" />
@@ -222,12 +222,15 @@ export function MastermixDetails({
             <ReagentDetails
               reagent={reagent}
               canDelete={mastermix.reagents.length > 1}
-              errors={validationErrors[reagent.id]}
-              showValidation={showValidation}
               onUpdate={(field, value) => updateReagent(reagent.id, field, value)}
-              onFieldBlur={handleFieldBlur}
               onDelete={() => removeReagent(reagent.id)}
               onClone={() => cloneReagent(reagent)}
+              onValidationChange={(isValid) => {
+                setReagentValidation((prev) => ({
+                  ...prev,
+                  [reagent.id]: isValid,
+                }));
+              }}
             />
           </div>
         ))}
