@@ -20,7 +20,7 @@ export default function RoboInstructionViewerPage() {
   if (!id) {
     return (
       <div className="container mx-auto py-6">
-        <h1 className="mb-6 text-2xl font-bold">Robo Instructions</h1>
+        <h1 className="mb-6 text-2xl font-bold">Robo Instructions Viewer</h1>
         <h3 className="text-lg font-semibold">Experiment not found</h3>
         <p className="text-gray-600">Please select a valid experiment.</p>
       </div>
@@ -30,7 +30,7 @@ export default function RoboInstructionViewerPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto flex flex-col items-center py-6">
-        <h1 className="mb-6 text-2xl font-bold">Robo Instructions</h1>
+        <h1 className="mb-6 text-2xl font-bold">Robo Instructions Viewer</h1>
         <CircularProgress />
       </div>
     );
@@ -38,8 +38,8 @@ export default function RoboInstructionViewerPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-6">
-        <h1 className="mb-6 text-2xl font-bold">Robo Instructions</h1>
+      <div className="py-4 md:py-10">
+        <h1 className="mb-6 text-2xl font-bold">Robo Instructions Viewer</h1>
         <h3 className="text-lg font-semibold text-red-600">Error loading experiment</h3>
         <p className="text-gray-600">Please try again later.</p>
       </div>
@@ -47,8 +47,11 @@ export default function RoboInstructionViewerPage() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="mb-6 text-2xl font-bold">Robo Instructions</h1>
+    <div className="py-4 md:py-10">
+      <div className="mb-6 space-y-1">
+        <h1 className="text-2xl font-bold">Robo Instructions Viewer</h1>
+        <p>Experiment: {experiment?.nameOfExperimentalPlan}</p>
+      </div>
       {experiment && <InteractiveRoboInstructionViewer experiment={experiment} />}
     </div>
   );

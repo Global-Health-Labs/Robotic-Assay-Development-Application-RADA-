@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { FC, useCallback, useLayoutEffect, useState } from 'react';
+import { FC, useRef, useEffect } from 'react';
 import { SelectedState } from './types';
+import { useFloating, offset, flip, shift, arrow, autoUpdate, Strategy } from '@floating-ui/react';
 
 interface Props {
   selectedState: SelectedState;
@@ -10,57 +11,39 @@ interface Props {
 }
 
 export const InstructionDetails: FC<Props> = ({ selectedState, cellPosition, className }) => {
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const arrowRef = useRef(null);
 
-  const updatePosition = useCallback(() => {
-    if (!cellPosition) return;
+  const {
+    x,
+    y,
+    strategy,
+    placement,
+    refs,
+    middlewareData: { arrow: { x: arrowX, y: arrowY } = {} },
+  } = useFloating({
+    placement: 'right',
+    whileElementsMounted: autoUpdate,
+    middleware: [offset(20), flip(), shift({ padding: 8 }), arrow({ element: arrowRef })],
+  });
 
-    // Get viewport dimensions
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    // Calculate initial position
-    let top = cellPosition.top - 20; // Slightly above the cell
-    let left = cellPosition.right + 20; // To the right of the cell with a gap
-
-    // Card dimensions (estimated)
-    const cardWidth = 350; // matches w-[350px]
-    const cardHeight = 200; // approximate height
-
-    // Adjust position if it would go off screen
-    if (left + cardWidth > viewportWidth) {
-      // If there's not enough space on the right, show on the left
-      left = cellPosition.left - cardWidth - 20;
+  // Update virtual element when cellPosition changes
+  useEffect(() => {
+    if (cellPosition) {
+      refs.setPositionReference({
+        getBoundingClientRect: () => ({
+          ...cellPosition,
+          x: cellPosition.x,
+          y: cellPosition.y,
+          top: cellPosition.top,
+          left: cellPosition.left,
+          right: cellPosition.right,
+          bottom: cellPosition.bottom,
+          width: cellPosition.width,
+          height: cellPosition.height,
+        }),
+      });
     }
-
-    if (top + cardHeight > viewportHeight) {
-      // If there's not enough space below, show above
-      top = Math.max(20, viewportHeight - cardHeight - 20);
-    }
-
-    setPosition({ top, left });
-  }, [cellPosition]);
-
-  // Update position when cell position changes or window resizes
-  useLayoutEffect(() => {
-    updatePosition();
-
-    const handleScroll = () => {
-      requestAnimationFrame(updatePosition);
-    };
-
-    const handleResize = () => {
-      requestAnimationFrame(updatePosition);
-    };
-
-    window.addEventListener('scroll', handleScroll, true); // true for capture phase
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [updatePosition]);
+  }, [cellPosition, refs]);
 
   const highlightText = (text: string | number) => (
     <span className="font-bold text-primary">{text}</span>
@@ -90,23 +73,39 @@ export const InstructionDetails: FC<Props> = ({ selectedState, cellPosition, cla
   }
 
   return (
-    <Card
-      className={cn(
-        'fixed z-50 w-[350px] shadow-lg transition-all duration-200',
-        'after:absolute after:left-[-8px] after:top-[28px] after:h-4 after:w-4 after:rotate-45 after:bg-card',
-        'after:border-l after:border-b after:border-border after:shadow-[-2px_2px_2px_rgba(0,0,0,0.1)]',
-        'border-2',
-        className
-      )}
+    <div
+      ref={refs.setFloating}
       style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
+        position: strategy as Strategy,
+        top: y ?? 0,
+        left: x ?? 0,
+        width: 'max-content',
+        zIndex: 50,
       }}
+      className={cn(
+        'opacity-1 transition-opacity duration-200',
+        cellPosition.top < 120 && 'opacity-0'
+      )}
     >
-      <CardHeader className="pb-2">
-        <CardTitle className="text-center text-lg">Instruction</CardTitle>
-      </CardHeader>
-      <CardContent>{renderInstruction()}</CardContent>
-    </Card>
+      <Card
+        className={cn('w-[350px] shadow-lg transition-all duration-200', 'border-2', className)}
+      >
+        <div
+          ref={arrowRef}
+          className="absolute h-4 w-4 rotate-45 border-b border-l border-border bg-card"
+          style={{
+            left: arrowX != null ? `${arrowX}px` : '',
+            top: arrowY != null ? `${arrowY}px` : '',
+            right: '',
+            bottom: '',
+            [placement === 'right' ? 'left' : 'right']: '-8px',
+          }}
+        />
+        <CardHeader className="pb-2">
+          <CardTitle className="text-center text-lg">Instruction</CardTitle>
+        </CardHeader>
+        <CardContent>{renderInstruction()}</CardContent>
+      </Card>
+    </div>
   );
 };

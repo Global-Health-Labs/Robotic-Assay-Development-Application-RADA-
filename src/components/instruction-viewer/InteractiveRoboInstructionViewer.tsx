@@ -59,7 +59,6 @@ const InteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
     plate: '',
     wellLabel: '',
   });
-  const [selectedPlate, setSelectedPlate] = useState<string>();
 
   const handleRowClick = (row: SelectedExperimentalPlanRow) => {
     setSelectedRow(row);
@@ -71,10 +70,6 @@ const InteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
       plate: row.plate,
       wellLabel: row.wellLabel,
     });
-  };
-
-  const handlePlateSelect = (plate: string) => {
-    setSelectedPlate(plate);
   };
 
   return (
@@ -89,7 +84,7 @@ const InteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
           />
         </div>
 
-        <div className="w-2/3">
+        <div className="flex w-2/3 flex-col gap-4">
           <div className="relative">
             <PlateLayout
               plateWellCount={currentPlateWell}
@@ -98,9 +93,9 @@ const InteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
             />
             <InstructionDetails selectedState={selectedState} cellPosition={selectedCellPosition} />
           </div>
+          <DeckLayout selectedPlate={selectedState.plate} />
         </div>
       </div>
-      <DeckLayout selectedPlate={selectedPlate} onPlateSelect={handlePlateSelect} />
     </div>
   );
 };

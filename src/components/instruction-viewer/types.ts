@@ -1,16 +1,25 @@
-import { Experiment } from '../../api/experiments.api';
-export enum PLATE_LAYOUT_NAME {
-  PLATE_SEALER = 'PLATE_SEALER',
-  PCR_PLATE_01 = 'PCR_PLATE_01',
-  PCR_PLATE_02 = 'PCR_PLATE_02',
-  PCR_PLATE_03 = 'PCR_PLATE_03',
-  PCR_PLATE_04 = 'PCR_PLATE_04',
-  PCR_PLATE_05 = 'PCR_PLATE_05',
-  PCR_PLATE_06 = 'PCR_PLATE_06',
-  PCR_COOLER_07 = 'PCR_COOLER_07',
-  IVL_384_FLAT_01 = 'IVL_384_FLAT_01',
-  IVL_384_FLAT_02 = 'IVL_384_FLAT_02',
-}
+export const PLATE_LAYOUT_NAME = {
+  // First section of plate locations
+  IVL_96_FLAT_01: 'ivl_96_flat_v1_0001',
+  IVL_96_FLAT_02: 'ivl_96_flat_v1_0002',
+  IVL_96_DW_01: 'ivl_96_dw_v1_0001',
+  IVL_96_DW_02: 'ivl_96_dw_v1_0002',
+  IVL_96_FLAT_03: 'ivl_96_flat_v1_0003',
+
+  // Second section of plate locations
+  PCR_COOLER_01: 'PCR_onCooler_0001',
+  PCR_COOLER_02: 'PCR_onCooler_0002',
+  PCR_COOLER_03: 'PCR_onCooler_0003',
+  IVL_384_FLAT_01: 'ivl_384_flat_v1_0001',
+  IVL_384_FLAT_02: 'ivl_384_flat_v1_0002',
+
+  // Third section of plate locations
+  IVL_96_TEMPLATE_01: 'ivl_96_template_v1_0001',
+  PCR_COOLER_04: 'PCR_onCooler_0004',
+  PCR_COOLER_05: 'PCR_onCooler_0005',
+  PCR_COOLER_06: 'PCR_onCooler_0006',
+  PCR_COOLER_07: 'PCR_onCooler_0007',
+} as const;
 
 export interface ExperimentalPlanRow {
   id: string;

@@ -1,5 +1,8 @@
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { CircleUserRound } from 'lucide-react';
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import DialogModal from './DialogModal';
 import {
@@ -11,10 +14,6 @@ import {
   DropdownMenuTrigger,
 } from './dropdown-menu';
 import RADALogoInverted from './RADALogoInverted';
-import { CircleUserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
 
 interface NavBarProps {
   name: string;
@@ -56,19 +55,17 @@ const NavBar: React.FC<NavBarProps> = ({ name, role }) => {
                 'hidden items-center justify-center border-b-2 px-4 py-2 text-center md:flex',
                 isActive('/experiments') ? 'border-primary' : 'border-transparent'
               )}
-              onClick={() => navigate('/experiments')}
             >
               Experiments
             </button>
           </Link>
           {role === 'admin' && (
-            <Link to="/roles-settings">
+            <Link to="/settings/users">
               <button
                 className={cn(
                   'hidden items-center justify-center border-b-2 px-4 py-2 text-center md:flex',
-                  isActive('/roles-settings') ? 'border-primary' : 'border-transparent'
+                  isActive('/settings/users') ? 'border-primary' : 'border-transparent'
                 )}
-                onClick={() => navigate('/roles-settings')}
               >
                 Settings
               </button>
@@ -95,7 +92,7 @@ const NavBar: React.FC<NavBarProps> = ({ name, role }) => {
               <Link to="/experiments">
                 <DropdownMenuItem className="block md:hidden">Experiments</DropdownMenuItem>
               </Link>
-              <Link to="/roles-settings">
+              <Link to="/settings/users">
                 <DropdownMenuItem className="block md:hidden">Settings</DropdownMenuItem>
               </Link>
               <DropdownMenuItem onSelect={handleLogout}>Log out</DropdownMenuItem>

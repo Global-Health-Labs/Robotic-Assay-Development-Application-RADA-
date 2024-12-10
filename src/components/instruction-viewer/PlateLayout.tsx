@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -37,14 +38,23 @@ export const PlateLayout: FC<Props> = ({ plateWellCount, selectedWellId, onCellP
     updateCellPosition();
   }, [selectedWellId, updateCellPosition]);
 
-  // Update position on window resize
+  // Update position on window resize and scroll
   useEffect(() => {
     const handleResize = () => {
       requestAnimationFrame(updateCellPosition);
     };
 
+    const handleScroll = () => {
+      requestAnimationFrame(updateCellPosition);
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
   }, [updateCellPosition]);
 
   // Generate column headers (1-12 or 1-24)
@@ -60,15 +70,12 @@ export const PlateLayout: FC<Props> = ({ plateWellCount, selectedWellId, onCellP
     const cells = Array.from({ length: maxColumn }, (_, colIndex) => {
       const wellId = maxRow * colIndex + (rowIndex + 1);
       const isSelected = selectedWellId === wellId;
-      
+
       return (
         <TableCell
           key={colIndex}
           ref={isSelected ? selectedCellRef : null}
-          className={cn(
-            'h-8 border p-0 transition-colors',
-            isSelected && highlightColor
-          )}
+          className={cn('h-8 border p-0 transition-colors', isSelected && highlightColor)}
           style={{ width: cellWidth }}
         />
       );
@@ -85,16 +92,21 @@ export const PlateLayout: FC<Props> = ({ plateWellCount, selectedWellId, onCellP
   });
 
   return (
-    <div className="relative rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="h-8 p-0" style={{ width: cellWidth }} />
-            {horizontalHeader}
-          </TableRow>
-        </TableHeader>
-        <TableBody>{rows}</TableBody>
-      </Table>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Plate Layout</CardTitle>
+      </CardHeader>
+      <CardContent className="relative">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="h-8 p-0" style={{ width: cellWidth }} />
+              {horizontalHeader}
+            </TableRow>
+          </TableHeader>
+          <TableBody>{rows}</TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 };

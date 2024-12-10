@@ -16,17 +16,7 @@ import { CopyPlus, Trash2Icon } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-
-const LIQUID_TYPES = [
-  { label: 'Water', value: LIQUID_TYPE.WATER },
-  { label: 'Buffer', value: LIQUID_TYPE.BUFFER },
-  { label: 'Primers', value: LIQUID_TYPE.PRIMER },
-  { label: 'Enzymes', value: LIQUID_TYPE.ENZYMES },
-  { label: 'Template', value: LIQUID_TYPE.TEMPLATE },
-  { label: 'Organics', value: LIQUID_TYPE.ORGANICS },
-  { label: 'Detergent', value: LIQUID_TYPE.DETERGENT },
-  { label: 'Mastermix', value: LIQUID_TYPE._20uL_MM },
-];
+import { useLiquidTypes } from '@/hooks/useLiquidTypes';
 
 const CONCENTRATION_VALIDATION_MESSAGE =
   'Final concentration must be less than or equal to stock concentration';
@@ -105,6 +95,13 @@ export function ReagentDetails({
   onClone,
   onValidationChange,
 }: ReagentDetailsProps) {
+  
+  const { data: liquidTypes } = useLiquidTypes();
+  const availableLiquidTypes = (liquidTypes || []).map((lt) => ({
+    label: lt.displayName,
+    value: lt.value,
+  }));
+
   const form = useForm<ReagentFormValues>({
     resolver: zodResolver(reagentSchema),
     defaultValues: {
@@ -218,7 +215,7 @@ export function ReagentDetails({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {LIQUID_TYPES.map((type) => (
+                {availableLiquidTypes.map((type) => (
                   <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>

@@ -1,33 +1,35 @@
-import { Card } from '@/components/ui/card';
-import { Stage, Layer, Rect, Group, Text } from 'react-konva';
-import { FC, useState } from 'react';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { FC } from 'react';
+import { Group, Layer, Rect, Stage, Text } from 'react-konva';
 import { PLATE_LAYOUT_NAME } from './types';
+import { cn } from '@/lib/utils';
 
 // Constants for layout dimensions
-const LAYOUT_CONTAINER_WIDTH = 600;
-const LAYOUT_CONTAINER_HEIGHT = 400;
-const LAYOUT_WIDTH = 500;
-const LAYOUT_HEIGHT = 300;
-const START_X_LAYOUT = (LAYOUT_CONTAINER_WIDTH - LAYOUT_WIDTH) / 2;
+const LAYOUT_CONTAINER_WIDTH = (window.innerWidth * 2) / 3 - 100;
+const LAYOUT_CONTAINER_HEIGHT = window.innerHeight / 3 + 50;
+
+const OFFSET = 100;
+const LAYOUT_WIDTH = LAYOUT_CONTAINER_WIDTH - OFFSET;
+const LAYOUT_HEIGHT = LAYOUT_CONTAINER_HEIGHT - 10;
+const START_X_LAYOUT = OFFSET / 2;
 
 // Constants for plate and tip dimensions
-const TIP_START_X = START_X_LAYOUT + 20;
-const TIP_START_Y = 50;
-const TIP_WIDTH = 60;
-const TIP_HEIGHT = 250;
-const PLATE_TIP_WIDTH = 60;
-const PLATE_HEIGHT = 40;
+const TIP_START_Y = 55;
+const TIP_START_X = START_X_LAYOUT + 30;
+const TIP_HEIGHT = LAYOUT_HEIGHT - TIP_START_Y - 20;
+const TIP_WIDTH = LAYOUT_WIDTH / 6 - 65;
+const PLATE_TIP_WIDTH = TIP_WIDTH + 80;
+const PLATE_HEIGHT = TIP_HEIGHT / 5 - 8;
 
 // Colors
 const PLATE_COLOR = '#FFFFFF';
 const highlightColor = '#2563eb'; // primary color
 
 interface Props {
-  selectedPlate?: string;
-  onPlateSelect?: (plate: string) => void;
+  selectedPlate: string;
 }
 
-export const DeckLayout: FC<Props> = ({ selectedPlate, onPlateSelect }) => {
+export const DeckLayout: FC<Props> = ({ selectedPlate }) => {
   const renderPlateLocation = (startXLocation: number, textList: string[]) => {
     const screenWidth = window.screen.width;
     const fontSize = screenWidth < 1500 ? 11 : 14;
@@ -44,9 +46,9 @@ export const DeckLayout: FC<Props> = ({ selectedPlate, onPlateSelect }) => {
             width={PLATE_TIP_WIDTH}
             height={PLATE_HEIGHT}
             fill={selectedPlate === textList[i] ? highlightColor : PLATE_COLOR}
+            className={cn(selectedPlate === textList[i] ? 'fill-primary' : 'fill-white')}
             stroke="black"
             shadowBlur={2}
-            onClick={() => onPlateSelect?.(textList[i])}
           />
           <Text
             x={startXLocation}
@@ -144,10 +146,11 @@ export const DeckLayout: FC<Props> = ({ selectedPlate, onPlateSelect }) => {
   };
 
   return (
-    <Card className="p-4 mt-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Deck Layout</CardTitle>
+      </CardHeader>
       <div className="flex flex-col items-center">
-        <h3 className="mb-4 font-bold text-primary">Deck Layout</h3>
-
         <div className="flex flex-row justify-center">
           <Stage width={LAYOUT_CONTAINER_WIDTH} height={LAYOUT_CONTAINER_HEIGHT}>
             <Layer>
@@ -169,7 +172,9 @@ export const DeckLayout: FC<Props> = ({ selectedPlate, onPlateSelect }) => {
           </Stage>
         </div>
 
-        <div className="mt-2 font-bold">Front of Machine</div>
+        <div className="mb-4 mr-auto mt-2 px-6 font-bold text-muted-foreground">
+          Front of Machine
+        </div>
       </div>
     </Card>
   );
