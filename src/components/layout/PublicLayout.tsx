@@ -21,7 +21,7 @@ const PublicLayout: React.FunctionComponent = () => {
   }
 
   return (
-    <div className="m-0 flex items-center justify-center">
+    <div className="m-0 flex h-screen w-screen items-start justify-center sm:items-center">
       <Suspense
         fallback={
           <div className="flex h-screen items-center justify-center">
@@ -31,8 +31,8 @@ const PublicLayout: React.FunctionComponent = () => {
           </div>
         }
       >
-        <div>
-          <div className="px-6 md:px-20">
+        <div className="w-full">
+          <div className="px-6 py-4 md:px-20">
             <Outlet />
           </div>
         </div>

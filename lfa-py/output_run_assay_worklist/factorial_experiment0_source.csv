@@ -1,0 +1,15 @@
+source,volume_total,from_plate,from_well,step,step_index,volume_ul
+ABI-131-N1,660.0,ivl_96_dw_v1_0001,1,sample,2,600.0
+ABI-131-P1,660.0,ivl_96_dw_v1_0001,2,sample,2,600.0
+D001-N1,660.0,ivl_96_dw_v1_0001,3,sample,2,600.0
+D001-P1,660.0,ivl_96_dw_v1_0001,4,sample,2,600.0
+D002-N1,660.0,ivl_96_dw_v1_0001,5,sample,2,600.0
+D002-P1,660.0,ivl_96_dw_v1_0001,6,sample,2,600.0
+D003-N1,660.0,ivl_96_dw_v1_0001,7,sample,2,600.0
+D003-P1,660.0,ivl_96_dw_v1_0001,8,sample,2,600.0
+D004-N1,660.0,ivl_96_dw_v1_0001,9,sample,2,600.0
+D004-P1,660.0,ivl_96_dw_v1_0001,10,sample,2,600.0
+R007-N1,660.0,ivl_96_dw_v1_0001,11,sample,2,600.0
+R007-P1,660.0,ivl_96_dw_v1_0001,12,sample,2,600.0
+CS031,88.0,ivl_384_flat_v1_0001,1,conjugate,1,48.0
+CS033,88.0,ivl_384_flat_v1_0001,3,conjugate,1,48.0

@@ -1,11 +1,25 @@
 import ProtectedLayout from '@/components/layout/ProtectedLayout';
 import PublicLayout from '@/components/layout/PublicLayout';
 import SettingsLayout from '@/pages/settings/SettingsLayout';
+import { ComponentType } from 'react';
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 
-const importComponent = (module) => {
+interface LazyModule {
+  default: ComponentType;
+}
+
+const LoadingFallback = () => (
+  <div className="flex h-screen items-center justify-center">
+    <div className="text-center">
+      <h2 className="text-2xl font-bold text-gray-900">Loading...</h2>
+    </div>
+  </div>
+);
+
+const importComponent = (module: Promise<LazyModule>) => {
   return module.then((m) => ({
     Component: m.default,
+    HydrateFallback: LoadingFallback,
   }));
 };
 
@@ -17,15 +31,23 @@ export const publicRoutes: RouteObject[] = [
         path: '/login',
         lazy: () => importComponent(import('@/pages/auth/SigninPage')),
       },
+      {
+        path: '/forgot-password',
+        lazy: () => importComponent(import('@/pages/auth/ForgotPasswordPage')),
+      },
+      {
+        path: '/email-sent',
+        lazy: () => importComponent(import('@/pages/auth/EmailSentPage')),
+      },
+      {
+        path: '/reset-password',
+        lazy: () => importComponent(import('@/pages/auth/ResetPasswordPage')),
+      },
     ],
   },
   // {
   //   path: '/register',
   //   component: SignupPage
-  // },
-  // {
-  //   path: '/forgot-password',
-  //   component: ForgotPasswordPage
   // },
   // {
   //   path: '/reset-password',
@@ -50,6 +72,7 @@ export const protectedRoutes: RouteObject[] = [
     element: <ProtectedLayout />,
     children: [
       {
+        index: true,
         path: '/experiments',
         lazy: () => importComponent(import('@/pages/experiments/ExperimentsPage')),
       },
@@ -84,6 +107,10 @@ export const protectedRoutes: RouteObject[] = [
           {
             path: 'liquid-types',
             lazy: () => importComponent(import('@/pages/settings/ManageLiquidTypesPage')),
+          },
+          {
+            path: 'volume-units',
+            lazy: () => importComponent(import('@/pages/settings/ManageVolumeUnitsPage')),
           },
         ],
       },

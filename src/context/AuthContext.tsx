@@ -8,6 +8,7 @@ interface AuthContextType {
   logout: () => void;
   name: string;
   role: string;
+  id: string;
   fetchUserProfile: () => Promise<void>;
 }
 
@@ -22,6 +23,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
+  const [id, setId] = useState('');
 
   const logout = () => {
     window.localStorage.removeItem('token');
@@ -42,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.status === 200 && response.data && response.data.user.confirmed) {
         setName(response.data.user.fullName || '');
         setRole(response.data.user.role);
+        setId(response.data.user.id);
         setIsAuthenticated(true);
       } else {
         setIsAuthenticated(false);
@@ -65,6 +68,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     name,
     role,
+    id,
     fetchUserProfile,
   };
 

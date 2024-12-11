@@ -13,10 +13,11 @@ import { cn } from '@/lib/utils';
 import { LIQUID_TYPE } from '@/utils/ExtractLiquidClass';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CopyPlus, Trash2Icon } from 'lucide-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useLiquidTypes } from '@/hooks/useLiquidTypes';
+import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 
 const CONCENTRATION_VALIDATION_MESSAGE =
   'Final concentration must be less than or equal to stock concentration';
@@ -95,12 +96,8 @@ export function ReagentDetails({
   onClone,
   onValidationChange,
 }: ReagentDetailsProps) {
-  
   const { data: liquidTypes } = useLiquidTypes();
-  const availableLiquidTypes = (liquidTypes || []).map((lt) => ({
-    label: lt.displayName,
-    value: lt.value,
-  }));
+  const { data: volumeUnits } = useVolumeUnits();
 
   const form = useForm<ReagentFormValues>({
     resolver: zodResolver(reagentSchema),
@@ -165,7 +162,7 @@ export function ReagentDetails({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {DROPDOWN_OPTIONS.UNITS.map((unit) => (
+                {(volumeUnits || []).map(({ unit }) => (
                   <SelectItem key={unit} value={unit}>
                     {unit}
                   </SelectItem>
@@ -215,9 +212,9 @@ export function ReagentDetails({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {availableLiquidTypes.map((type) => (
+                {(liquidTypes || []).map((type) => (
                   <SelectItem key={type.value} value={type.value}>
-                    {type.label}
+                    {type.displayName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -233,7 +230,7 @@ export function ReagentDetails({
           variant="ghost"
           size="icon"
           onClick={onClone}
-          className="bg-transparent"
+          className="bg-transparent text-muted-foreground"
           title="Copy reagent"
         >
           <CopyPlus className="h-4 w-4" />

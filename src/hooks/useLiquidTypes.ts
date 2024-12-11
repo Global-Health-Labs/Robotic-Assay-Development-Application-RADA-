@@ -17,7 +17,7 @@ const fetchLiquidTypes = async (): Promise<LiquidType[]> => {
 
 export function useLiquidTypes() {
   return useQuery({
-    queryKey: ['liquidTypes'],
+    queryKey: ['liquid-types'],
     queryFn: fetchLiquidTypes,
     staleTime: 30 * 60 * 1000, // Consider data fresh for 5 minutes
   });

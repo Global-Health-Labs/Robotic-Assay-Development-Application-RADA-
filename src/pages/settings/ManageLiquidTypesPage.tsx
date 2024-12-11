@@ -9,8 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useLiquidTypes } from '@/hooks/useLiquidTypes';
-import { useMutation } from '@tanstack/react-query';
+import { LiquidType, useLiquidTypes } from '@/hooks/useLiquidTypes';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
@@ -28,14 +28,20 @@ type NewState = {
 
 // This would come from your backend
 export default function ManageLiquidTypesPage() {
+  const queryClient = useQueryClient();
   const { data: liquidTypes = [], isLoading } = useLiquidTypes();
   const [editState, setEditState] = useState<EditState | null>(null);
   const [newItem, setNewItem] = useState<NewState | null>(null);
 
   const addMutation = useMutation({
-    mutationFn: (data: { value: string; displayName: string }) =>
-      axios.post('/settings/liquid-types', data),
-    onSuccess: () => {
+    mutationFn: async (data: { value: string; displayName: string }) => {
+      const res = await axios.post('/settings/liquid-types', data);
+      return res.data;
+    },
+    onSuccess: (newLiquidType) => {
+      queryClient.setQueryData(['liquid-types'], (oldTypes: LiquidType[] = []) => {
+        return [...oldTypes, newLiquidType];
+      });
       toast.success('Liquid type added successfully');
       setEditState(null);
     },
@@ -52,9 +58,22 @@ export default function ManageLiquidTypesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { value: string; displayName: string } }) =>
-      axios.put(`/settings/liquid-types/${id}`, data),
-    onSuccess: () => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { value: string; displayName: string };
+    }) => {
+      const res = await axios.put(`/settings/liquid-types/${id}`, data);
+      return res.data;
+    },
+    onSuccess: (updatedLiquidType) => {
+      queryClient.setQueryData(['liquid-types'], (oldTypes: LiquidType[] = []) => {
+        return oldTypes.map((type) =>
+          type.id === updatedLiquidType.id ? updatedLiquidType : type
+        );
+      });
       toast.success('Liquid type updated successfully');
       setEditState(null);
     },
@@ -73,8 +92,14 @@ export default function ManageLiquidTypesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => axios.delete(`/settings/liquid-types/${id}`),
-    onSuccess: () => {
+    mutationFn: async (id: string) => {
+      const res = await axios.delete(`/settings/liquid-types/${id}`);
+      return res.data;
+    },
+    onSuccess: (deletedLiquidType) => {
+      queryClient.setQueryData(['liquid-types'], (oldTypes: LiquidType[] = []) =>
+        oldTypes.filter((type) => type.id !== deletedLiquidType.id)
+      );
       toast.success('Liquid type deleted successfully');
     },
     onError: (error: AxiosError) => {

@@ -2,6 +2,7 @@ import { loginRequest } from '@/api/auth.api';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import RADALogoInverted from '@/components/ui/RADALogoInverted';
 import { useAuth } from '@/context/AuthContext';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AxiosError } from 'axios';
@@ -20,12 +21,6 @@ const loginSchema = z.object({
 
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
-interface LoginResponse {
-  data: {
-    access_token: string;
-  };
-}
-
 const SigninPage: React.FC = () => {
   const navigate = useNavigate();
   const { fetchUserProfile } = useAuth();
@@ -41,12 +36,20 @@ const SigninPage: React.FC = () => {
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
-      const res = (await loginRequest(data)) as LoginResponse;
+      const res = await loginRequest(data);
 
-      if (res.data.access_token) {
-        window.localStorage.setItem('token', res.data.access_token);
-        await fetchUserProfile();
-        navigate('/experiments');
+      // Handle unconfirmed users
+      if (!res.data.user.confirmed) {
+        // Clear any existing token
+        window.localStorage.removeItem('token');
+        // Redirect to reset password page with the token
+        navigate(`/reset-password?token=${res.data.access_token}`, { replace: true });
+      } else {
+        if (res.data.access_token) {
+          window.localStorage.setItem('token', res.data.access_token);
+          await fetchUserProfile();
+          navigate('/experiments');
+        }
       }
     } catch (error) {
       console.error(error);
@@ -65,8 +68,9 @@ const SigninPage: React.FC = () => {
   };
 
   return (
-    <div className="m-0 flex items-center justify-center">
-      <div className="flex w-96 flex-col items-center gap-10 rounded-lg p-7">
+    <div className="m-0 flex flex-col items-center gap-6">
+      <RADALogoInverted />
+      <div className="flex w-full flex-col items-center gap-6 p-3 sm:max-w-md sm:rounded-lg sm:border sm:p-7 sm:shadow-md">
         <div className="flex flex-col items-start gap-1 self-stretch">
           <div className="text-left text-2xl font-bold leading-tight text-neutral-600">
             Welcome back!
@@ -118,10 +122,10 @@ const SigninPage: React.FC = () => {
             />
 
             <Button type="submit" className="w-full">
-              Sign in
+              Sign In
             </Button>
 
-            <div className="w-full text-xs font-bold leading-none">
+            <div className="flex w-full justify-center text-xs font-bold leading-none">
               <a href="/forgot-password" className="text-zinc-700 hover:text-blue-500">
                 Forgot your password?
               </a>

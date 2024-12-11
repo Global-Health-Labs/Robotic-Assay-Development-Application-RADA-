@@ -1,6 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from '@/api/axios';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -9,58 +16,101 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Edit2, Search, X } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { AddUserDialog } from './components/AddUserDialog';
+import dayjs from 'dayjs';
 
 interface User {
-  user_id: string;
+  id: string;
   fullname: string;
   email: string;
   role: string;
   role_updated_at: string;
 }
 
-export default function UsersPage() {
-  const queryClient = useQueryClient();
-  const { role: currentUserRole } = useAuth();
+type EditState = {
+  id: string;
+  fullname: string;
+  role: string;
+};
 
-  // Fetch users with roles
+export default function UsersPage() {
+  const { role: currentUserRole, id: currentUserId } = useAuth();
+  const queryClient = useQueryClient();
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await axios.get('/users/roles');
-      return response.data as User[];
+      const response = await axios.get<User[]>('/users');
+      return response.data;
     },
   });
 
-  // Update user role mutation
-  const updateRole = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      const response = await axios.patch(`/users/${userId}/role`, { newRole });
+  const filteredUsers = users.filter((user) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      user.fullname.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower) ||
+      user.role.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<User> }) => {
+      const response = await axios.put(`/users/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Role updated successfully');
+      toast.success('User updated successfully');
+      setEditState(null);
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update role');
+    onError: () => {
+      toast.error('Failed to update user');
     },
   });
 
-  const handleRoleChange = (userId: string, newRole: string) => {
-    updateRole.mutate({ userId, newRole });
+  const handleEdit = (user: User) => {
+    if (editState?.id === user.id) {
+      setEditState(null);
+    } else {
+      setEditState({
+        id: user.id,
+        fullname: user.fullname,
+        role: user.role,
+      });
+    }
+  };
+
+  const handleSave = (user: User) => {
+    if (!editState) return;
+
+    const { fullname, role } = editState;
+
+    if (!fullname.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+
+    updateMutation.mutate({
+      id: user.id,
+      data: { fullname, role },
+    });
+  };
+
+  const handleCancel = () => {
+    setEditState(null);
   };
 
   if (currentUserRole !== 'admin') {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
         <div className="text-lg font-medium text-muted-foreground">
           You don't have permission to access this page
         </div>
@@ -70,19 +120,47 @@ export default function UsersPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
         <div className="text-lg font-medium text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">User Management</h3>
-        <p className="text-sm text-muted-foreground">
-          Manage user roles and permissions
-        </p>
+    <div className="w-full max-w-4xl space-y-4">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium">Users</h3>
+          <p className="mb-4 text-sm text-muted-foreground">Manage user accounts and roles</p>
+        </div>
+
+        <AddUserDialog />
+      </div>
+
+      <div className="relative mb-4 w-full max-w-sm">
+        <Input
+          placeholder="Search users by name, email, or role..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pr-16"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setSearchQuery('');
+            }
+          }}
+        />
+        <div className="absolute right-3 top-3 flex items-center gap-2">
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Clear search</span>
+            </button>
+          )}
+          <Search className="h-4 w-4 text-muted-foreground" />
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -93,30 +171,71 @@ export default function UsersPage() {
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Last Updated</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.user_id}>
-                <TableCell>{user.fullname}</TableCell>
+            {filteredUsers.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  {editState?.id === user.id ? (
+                    <Input
+                      value={editState.fullname}
+                      onChange={(e) =>
+                        setEditState((prev) =>
+                          prev ? { ...prev, fullname: e.target.value } : null
+                        )
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          handleCancel();
+                        }
+                      }}
+                    />
+                  ) : (
+                    user.fullname
+                  )}
+                </TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Select
-                    value={user.role}
-                    onValueChange={(value) => handleRoleChange(user.user_id, value)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {editState?.id === user.id && currentUserId !== user.id ? (
+                    <Select
+                      value={editState.role}
+                      onValueChange={(value) =>
+                        setEditState((prev) => (prev ? { ...prev, role: value } : null))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="supervisor">Supervisor</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    user.role
+                  )}
                 </TableCell>
+                <TableCell>{dayjs(user.role_updated_at).format('DD MMM YYYY, HH:mm')}</TableCell>
                 <TableCell>
-                  {new Date(user.role_updated_at).toLocaleDateString()}
+                  <div className="flex items-center gap-2">
+                    {editState?.id === user.id ? (
+                      <>
+                        <Button variant="ghost" size="icon" onClick={() => handleSave(user)}>
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={handleCancel}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

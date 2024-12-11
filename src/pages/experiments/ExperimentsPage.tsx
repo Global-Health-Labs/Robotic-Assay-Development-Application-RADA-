@@ -8,6 +8,7 @@ import { DataTable } from '@/components/data-table/data-table';
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header';
 import { useTableState } from '@/components/data-table/table-state';
 import { SearchInput } from '@/components/experiments/search-input';
+import { UploadDialog } from '@/components/file-uploader/upload-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -45,6 +46,7 @@ interface ExperimentActionsProps {
 const ExperimentActions: React.FC<ExperimentActionsProps> = ({ experiment }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   const cloneExperimentMutation = useMutation({
     mutationFn: cloneExperiment,
@@ -58,54 +60,68 @@ const ExperimentActions: React.FC<ExperimentActionsProps> = ({ experiment }) => 
     },
   });
 
+  const handleFileUpload = (files: File[]) => {
+    // TODO: Implement file upload logic
+    console.log('Files to upload:', files);
+    toast.success('Files uploaded successfully');
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <Link to={`/experiments/${experiment.id}/edit`}>
-          <DropdownMenuItem className="cursor-pointer">
-            <Edit2 className="mr-2 h-4 w-4" />
-            Edit Experiment
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <Link to={`/experiments/${experiment.id}/edit`}>
+            <DropdownMenuItem className="cursor-pointer">
+              <Edit2 className="mr-2 h-4 w-4" />
+              Edit Experiment
+            </DropdownMenuItem>
+          </Link>
+          <Link to={`/experiments/${experiment.id}/export`}>
+            <DropdownMenuItem className="cursor-pointer">
+              <FileText className="mr-2 h-4 w-4" />
+              Export Worklist Files
+            </DropdownMenuItem>
+          </Link>
+          <Link to={`/experiments/${experiment.id}/instructions`}>
+            <DropdownMenuItem className="cursor-pointer">
+              <FileText className="mr-2 h-4 w-4" />
+              View Robo Instructions
+            </DropdownMenuItem>
+          </Link>
+          <DropdownMenuItem
+            onClick={() => setUploadDialogOpen(true)}
+            className="cursor-pointer"
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Files
           </DropdownMenuItem>
-        </Link>
-        <Link to={`/experiments/${experiment.id}/export`}>
-          <DropdownMenuItem className="cursor-pointer">
-            <FileText className="mr-2 h-4 w-4" />
-            Export Worklist Files
+          <DropdownMenuItem
+            onClick={() => cloneExperimentMutation.mutate(experiment.id)}
+            className="cursor-pointer"
+            disabled={cloneExperimentMutation.isPending}
+          >
+            <Copy
+              className={cn('mr-2 h-4 w-4', {
+                'animate-spin': cloneExperimentMutation.isPending,
+              })}
+            />
+            {cloneExperimentMutation.isPending ? 'Cloning...' : 'Clone Experiment'}
           </DropdownMenuItem>
-        </Link>
-        <Link to={`/experiments/${experiment.id}/instructions`}>
-          <DropdownMenuItem className="cursor-pointer">
-            <FileText className="mr-2 h-4 w-4" />
-            View Robo Instructions
-          </DropdownMenuItem>
-        </Link>
-        <DropdownMenuItem
-          onClick={() => cloneExperimentMutation.mutate(experiment.id)}
-          className="cursor-pointer"
-          disabled={cloneExperimentMutation.isPending}
-        >
-          <Copy
-            className={cn('mr-2 h-4 w-4', {
-              'animate-spin': cloneExperimentMutation.isPending,
-            })}
-          />
-          {cloneExperimentMutation.isPending ? 'Cloning...' : 'Clone Experiment'}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => navigate(`/experiments/${experiment.id}/documents`)}
-          className="cursor-pointer"
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          Upload Documents
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <UploadDialog
+        open={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+        onUpload={handleFileUpload}
+      />
+    </>
   );
 };
 
