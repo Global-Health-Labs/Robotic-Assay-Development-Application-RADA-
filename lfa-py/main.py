@@ -31,6 +31,7 @@ def main():
     keys = list(inspect.signature(make_worklist_full_2d).parameters.keys())
     values = [input_dict[each] for each in keys]
     current_input = dict(zip(keys, values))
+    # generates output_run_assay_worklist/factorial_experiment0.csv
     make_worklist_full_2d(**current_input)
 
     # make full worklists
@@ -44,6 +45,7 @@ def main():
     for each_file in run_worklist_files:
         run_worklist = pd.read_csv(each_file)
         full = full_from_run_worklist(run_worklist, **current_input)
+        # print("Output from full_from_run_worklist:", full)
 
         # update liquid class
         full['worklist'] = update_liquid_class(full['worklist'], input_dict['liquid_type_df'])
@@ -57,4 +59,3 @@ def main():
 main()
 # if __name__ == 'main':
 #      main()
-

@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -20,16 +20,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { createExperiment } from "@/api/experiments.api";
-import { Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { createExperiment } from '@/api/naat-experiments.api';
+import { Plus } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().min(1, 'Description is required'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -42,27 +42,27 @@ export function CreateExperimentDialog() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      description: "",
+      name: '',
+      description: '',
     },
   });
 
   const mutation = useMutation({
     mutationFn: createExperiment,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["experiments"] });
+      queryClient.invalidateQueries({ queryKey: ['experiments'] });
       toast({
-        title: "Success",
-        description: "Experiment created successfully",
+        title: 'Success',
+        description: 'Experiment created successfully',
       });
       setOpen(false);
       form.reset();
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to create experiment",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to create experiment',
+        variant: 'destructive',
       });
     },
   });
@@ -107,21 +107,15 @@ export function CreateExperimentDialog() {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Enter experiment description"
-                      {...field}
-                    />
+                    <Textarea placeholder="Enter experiment description" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button
-                type="submit"
-                disabled={mutation.isPending}
-              >
-                {mutation.isPending ? "Creating..." : "Create"}
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? 'Creating...' : 'Create'}
               </Button>
             </DialogFooter>
           </form>

@@ -26,7 +26,8 @@ export type NewExperiment = {
   numOfTechnicalReplicates: number;
   mastermixVolumePerReaction: number;
   sampleVolumePerReaction: number;
-  pcrPlateSize: string;
+  pcrPlateSize: number;
+  deckLayoutId: string;
 };
 
 export type Experiment = {
@@ -38,15 +39,22 @@ export type Experiment = {
 
 export interface Reagent {
   id: string;
-  finalSource: string;
+  source: string;
   unit: string;
   finalConcentration: number;
   stockConcentration: number;
   liquidType: string;
-  orderIndex: number;
-  mastermixId: string;
-  dispenseType: DispenseType;
-  tipWashing: 'Yes' | 'No';
+  orderIndex?: number;
+  mastermixId?: string;
+  dispenseType?: DispenseType;
+  tipWashing?: 'Yes' | 'No';
+}
+
+export interface DeckLayout {
+  id: string;
+  name: string;
+  description: string;
+  platePositions: { id: string; position: number }[];
 }
 
 // export interface Reagent {
@@ -66,8 +74,8 @@ export interface Reagent {
 
 export interface Mastermix {
   id: string;
-  nameOfMasterMix: string;
-  recipes: Reagent[];
+  name: string;
+  reagents: Reagent[];
 }
 
 export interface ExperimentMastermix {
@@ -76,7 +84,7 @@ export interface ExperimentMastermix {
 }
 
 export type ExperimentWithMastermix = Experiment & {
-  masterMixes: Mastermix[];
+  mastermixes: Mastermix[];
 };
 
 export const getExperiments = async (filters: ExperimentFilters = {}) => {

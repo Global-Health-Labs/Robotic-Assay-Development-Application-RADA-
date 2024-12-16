@@ -1,3 +1,4 @@
+import { Mastermix, Reagent } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -6,26 +7,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { PageLoading } from '@/components/ui/page-loading';
+import { Separator } from '@/components/ui/separator';
+import { useLiquidTypes } from '@/hooks/useLiquidTypes';
+import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 import { cn } from '@/lib/utils';
-import { Copy, CopyPlus, Menu, Plus, PlusCircle, Trash2 } from 'lucide-react';
+import { CopyPlus, Menu, PlusCircle, Trash2 } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { ReagentDetails } from './ReagentDetails';
-import { Separator } from '@/components/ui/separator';
-
-interface Reagent {
-  id: string;
-  source: string;
-  unit: string;
-  finalConcentration: number;
-  stockConcentration: number;
-  liquidType: string;
-}
-
-interface Mastermix {
-  id: string;
-  name: string;
-  reagents: Reagent[];
-}
 
 interface MastermixDetailsProps {
   mastermix: Mastermix;
@@ -73,6 +62,9 @@ export function MastermixDetails({
   // Track validation status of each reagent
   const [reagentValidation, setReagentValidation] = React.useState<Record<string, boolean>>({});
   const [nameValid, setNameValid] = React.useState(!!mastermix.name);
+
+  const { data: liquidTypes, isLoading: liquidTypesLoading } = useLiquidTypes();
+  const { data: volumeUnits, isLoading: volumeUnitsLoading } = useVolumeUnits();
 
   // Update overall validation status whenever a reagent's validation changes
   useEffect(() => {
@@ -125,10 +117,10 @@ export function MastermixDetails({
     const newReagent: Reagent = {
       id: crypto.randomUUID(),
       source: '',
-      unit: 'µL',
+      unit: volumeUnits ? volumeUnits[0].unit : '',
       finalConcentration: '' as unknown as number,
       stockConcentration: '' as unknown as number,
-      liquidType: 'Water',
+      liquidType: liquidTypes ? liquidTypes[0].value : '',
     };
 
     onUpdate({
@@ -150,6 +142,10 @@ export function MastermixDetails({
     setNameValid(!!name);
     onUpdate({ ...mastermix, name });
   };
+
+  if (liquidTypesLoading || volumeUnitsLoading) {
+    return <PageLoading />;
+  }
 
   return (
     <div className="mastermix-container space-y-4 rounded-lg border border-zinc-200 shadow">
@@ -225,6 +221,8 @@ export function MastermixDetails({
               onUpdate={(field, value) => updateReagent(reagent.id, field, value)}
               onDelete={() => removeReagent(reagent.id)}
               onClone={() => cloneReagent(reagent)}
+              liquidTypes={liquidTypes || []}
+              volumeUnits={volumeUnits || []}
               onValidationChange={(isValid) => {
                 setReagentValidation((prev) => ({
                   ...prev,

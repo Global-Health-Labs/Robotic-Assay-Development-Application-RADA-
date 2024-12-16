@@ -1,4 +1,4 @@
-import { Experiment, Mastermix } from '@/api/experiments.api';
+import { Experiment, Mastermix } from '@/api/naat-experiments.api';
 import {
   SourceKeyPair,
   VolumeSourcePair,
@@ -70,9 +70,9 @@ export const getMastermixWorklistData = (
   listOfMastermixes.forEach((mastermix) => {
     // Calculate the total volumes of other components in mastermix beside water
     let totalVolumeBesideWater = 0;
-    mastermix.recipes.forEach((recipe) => {
+    mastermix.reagents.forEach((recipe) => {
       let volume_ul = 0;
-      if (recipe.finalSource.trim().toLowerCase() !== 'water') {
+      if (recipe.source.trim().toLowerCase() !== 'water') {
         volume_ul = calculateVolumeEachSource(
           volumeWorking,
           recipe.finalConcentration,
@@ -83,17 +83,17 @@ export const getMastermixWorklistData = (
     });
 
     // Loop through each recipe source in mastermix
-    mastermix.recipes.forEach((recipe) => {
+    mastermix.reagents.forEach((recipe) => {
       let listOfVolume: VolumeStep[];
 
       // Calculate volume for water source
-      if (recipe.finalSource.trim().toLowerCase() === 'water') {
+      if (recipe.source.trim().toLowerCase() === 'water') {
         listOfVolume = getVolume_uL_water(
           numOfWells,
           volumeOfMastermix,
           totalVolumeBesideWater,
           recipe.liquidType,
-          recipe.dispenseType
+          recipe.dispenseType!
         );
       } else {
         listOfVolume = getVolume_uL(
@@ -102,7 +102,7 @@ export const getMastermixWorklistData = (
           recipe.stockConcentration,
           recipe.finalConcentration,
           recipe.liquidType,
-          recipe.dispenseType
+          recipe.dispenseType!
         );
       }
 
@@ -112,21 +112,21 @@ export const getMastermixWorklistData = (
         data.push({
           id: mastermix.id,
           recipeId: recipe.id,
-          step: mastermix.nameOfMasterMix,
+          step: mastermix.name,
           dx: VALUE.COLUMN_B,
           dz: VALUE.COLUMN_C,
           volume_uL: step.volume,
           liquid_class: step.liquidClass,
           timer_delta: VALUE.COLUMN_F,
-          source: recipe.finalSource,
+          source: recipe.source,
           step_index: VALUE.COLUMN_H,
           destination: VALUE.COLUMN_I,
           group_number: 0,
           timer_group_check: VALUE.COLUMN_K,
           guid: VALUE.COLUMN_L,
           from_path: VALUE.COLUMN_M,
-          asp_mixing: wl.getAspMixing(recipe.tipWashing),
-          dispense_type: recipe.dispenseType,
+          asp_mixing: wl.getAspMixing(recipe.tipWashing!),
+          dispense_type: recipe.dispenseType!,
           tip_type: step.tipType.toString(),
           touchoff_dis: VALUE.COLUMN_Q,
           to_plate: VALUE.COLUMN_R,
@@ -335,7 +335,7 @@ const generateMixingSteps = (
 
     for (let i = 0; i < numOfWells; i++) {
       const mixingStep: WorklistData = {
-        step: 'mix_' + mastermix.nameOfMasterMix,
+        step: 'mix_' + mastermix.name,
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: volume,
@@ -380,7 +380,7 @@ const generateAliquotingStep = (
   const masterMixVolumePerReaction = experimentalPlanData[0].mastermixVolumePerReaction;
   const aq_groupNumber = mm_groupNumber + 1;
   let aq_to_well = 1;
-  const plateSize = parseInt(experimentalPlanData[0].pcrPlateSize); // 96 or 384
+  const plateSize = Number(experimentalPlanData[0].pcrPlateSize); // 96 or 384
   let aq_from_well = 1;
   let start_from_well_id = 1;
   let countRow = 0;
@@ -396,7 +396,7 @@ const generateAliquotingStep = (
       countRow++;
 
       data.push({
-        step: 'aq_' + mastermix.nameOfMasterMix,
+        step: 'aq_' + mastermix.name,
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: masterMixVolumePerReaction,

@@ -1,4 +1,4 @@
-import { ExperimentWithMastermix } from '@/api/experiments.api';
+import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { FC, useState } from 'react';
 import { SolutionsTable } from './SolutionsTable';
 import { PlateLayout } from './PlateLayout';

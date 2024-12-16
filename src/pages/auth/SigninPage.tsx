@@ -51,7 +51,7 @@ const SigninPage: React.FC = () => {
           navigate('/experiments');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
 
       if ((error as Error).message === 'Network Error') {
@@ -62,7 +62,7 @@ const SigninPage: React.FC = () => {
       if ((error as AxiosError<string>).response?.data === 'Invalid email or password') {
         toast.error('Invalid email or password');
       } else {
-        toast.error('An error occurred. Please try again later.');
+        toast.error(error.response?.data?.message || 'An error occurred. Please try again later.');
       }
     }
   };

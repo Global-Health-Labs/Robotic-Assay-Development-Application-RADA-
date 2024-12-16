@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Download, FileText, Table } from 'lucide-react';
 import { getMastermixWorklistData } from '@/utils/generateMastermixWorklist';
 import { getSampleWorklistData } from '@/utils/generateSampleWorklist';
-import { Mastermix } from '@/api/experiments.api';
+import { Experiment, Mastermix } from '@/api/naat-experiments.api';
+import { WorklistData } from '@/utils/experiment.types';
 
 const FILE_NAME = {
   EXPERIMENTAL_PLAN: 'experimental-plan-RoboNAAT.txt',
@@ -15,41 +16,22 @@ const FILE_NAME = {
 
 const SPECIAL_CHAR_FILE = '*****-----*****';
 
-interface ExperimentPlan {
-  nameOfExperimentalPlan: string;
-  masterMixVolumnPerReaction: number;
-  sampleVolumnPerReaction: number;
-  pcrPlateSize: number;
-  numOfSampleConcentrations: number;
-  numOfTechnicalReplicates: number;
-  experimentalPlanID: string;
-}
-
 interface GenerateWorklistFilesProps {
-  experiment: ExperimentPlan[];
+  experiment: Experiment[];
   mastermixes: Mastermix[];
 }
 
 export function GenerateWorklistFiles({ experiment, mastermixes }: GenerateWorklistFilesProps) {
-  const [mastermixData, setMastermixData] = useState<any[]>([]);
-  const [sampleData, setSampleData] = useState<any[]>([]);
+  const [mastermixData, setMastermixData] = useState<WorklistData[]>([]);
+  const [sampleData, setSampleData] = useState<WorklistData[]>([]);
 
   useEffect(() => {
-    // Convert experiment and mastermixes data to match the expected format
-    const experimentalPlanData = experiment.map((exp) => ({
-      masterMixVolumnPerReaction: exp.masterMixVolumnPerReaction,
-      sampleVolumnPerReaction: exp.sampleVolumnPerReaction,
-      numOfSampleConcentrations: exp.numOfSampleConcentrations,
-      numOfTechnicalReplicates: exp.numOfTechnicalReplicates,
-      pcrPlateSize: exp.pcrPlateSize.toString(),
-    }));
-
     // Generate mastermix worklist data
-    const mastermixWorklistData = getMastermixWorklistData(mastermixes, experimentalPlanData, true);
+    const mastermixWorklistData = getMastermixWorklistData(mastermixes, experiment, true);
     setMastermixData(mastermixWorklistData);
 
     // Generate sample worklist data
-    const sampleWorklistData = getSampleWorklistData(mastermixes, experimentalPlanData);
+    const sampleWorklistData = getSampleWorklistData(mastermixes, experiment);
     setSampleData(sampleWorklistData);
   }, [experiment, mastermixes]);
 

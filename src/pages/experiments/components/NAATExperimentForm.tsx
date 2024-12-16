@@ -1,7 +1,7 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch } from 'react-hook-form';
-import * as z from 'zod';
+import axios from '@/api/axios';
+import { DeckLayout, Experiment, NewExperiment } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -19,10 +19,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Experiment } from '@/api/experiments.api';
-import { some, values } from 'lodash-es';
+import { DeckLayoutPreview } from '@/pages/experiments/components/DeckLayoutPreview';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { DialogDescription } from '@radix-ui/react-dialog';
+import { useQuery } from '@tanstack/react-query';
+import { values } from 'lodash-es';
+import { useEffect, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import * as z from 'zod';
 
 const formSchema = z
   .object({
@@ -31,6 +36,9 @@ const formSchema = z
         required_error: 'Name of experimental plan is required',
       })
       .min(1, 'Name of experimental plan is required'),
+    deckLayoutId: z.string({
+      required_error: 'Deck layout is required',
+    }),
     numOfSampleConcentrations: z.coerce
       .number()
       .min(1, 'Number of samples must be 1 or greater')
@@ -78,7 +86,7 @@ const PCR_PLATE_SIZES = ['96', '384'];
 
 interface ExperimentFormProps {
   defaultValues?: Experiment;
-  onSubmit: (data: FormValues, isDirty: boolean) => void;
+  onSubmit: (data: NewExperiment, isDirty: boolean) => void;
   isSubmitting?: boolean;
   onCancel: () => void;
   mode: 'create' | 'edit';
@@ -100,10 +108,11 @@ const getFormDefaultValues = (experiment?: Experiment): FormValues => {
     sampleVolumePerReaction: '' as any,
     /* eslint-enable @typescript-eslint/no-explicit-any */
     pcrPlateSize: PCR_PLATE_SIZES[0],
+    deckLayoutId: '',
   };
 };
 
-export function ExperimentForm({
+export function NAATExperimentForm({
   defaultValues,
   onSubmit,
   isSubmitting,
@@ -131,8 +140,24 @@ export function ExperimentForm({
 
   const handleSubmit = (data: FormValues) => {
     const isDirty = values(form.formState.dirtyFields).some((dirty) => dirty);
-    onSubmit(data, isDirty);
+    onSubmit(
+      {
+        ...data,
+        pcrPlateSize: Number(data.pcrPlateSize),
+      },
+      isDirty
+    );
   };
+
+  const { data: deckLayouts = [] } = useQuery({
+    queryKey: ['deck-layouts'],
+    queryFn: async () => {
+      const response = await axios.get<DeckLayout[]>('/settings/naat/deck-layouts');
+      return response.data;
+    },
+  });
+
+  const [previewLayout, setPreviewLayout] = useState<DeckLayout | null>(null);
 
   return (
     <Form {...form}>
@@ -160,6 +185,62 @@ export function ExperimentForm({
                 )}
               >
                 A unique name to identify your experimental plan
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="deckLayoutId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Deck Layout</FormLabel>
+              <div className="flex gap-2">
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a deck layout" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {deckLayouts.map((layout) => (
+                        <SelectItem key={layout.id} value={layout.id}>
+                          {layout.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const layout = deckLayouts.find((l) => l.id === field.value);
+                    if (layout) {
+                      setPreviewLayout(layout);
+                    }
+                  }}
+                  className="h-full"
+                  disabled={!field.value}
+                >
+                  Preview
+                </Button>
+              </div>
+              <FormDescription
+                className={cn(
+                  'transition-colors duration-200',
+                  focusedField === 'deckLayoutId'
+                    ? 'text-muted-foreground'
+                    : 'text-muted-foreground/50'
+                )}
+              >
+                Select a deck layout for your experiment
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -299,30 +380,32 @@ export function ExperimentForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>PCR Plate Size</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                onOpenChange={(open) => {
-                  if (open) {
-                    setFocusedField('pcrPlateSize');
-                  } else {
-                    setFocusedField(null);
-                  }
-                }}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select plate size" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {PCR_PLATE_SIZES.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size} wells
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  onOpenChange={(open) => {
+                    if (open) {
+                      setFocusedField('pcrPlateSize');
+                    } else {
+                      setFocusedField(null);
+                    }
+                  }}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select plate size" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {PCR_PLATE_SIZES.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size} wells
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
               <FormDescription
                 className={cn(
                   'transition-colors duration-200',
@@ -347,6 +430,18 @@ export function ExperimentForm({
           </Button>
         </div>
       </form>
+
+      <Dialog open={Boolean(previewLayout)} onOpenChange={() => setPreviewLayout(null)}>
+        <DialogContent className="h-auto max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{previewLayout?.name}</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {previewLayout?.description}
+            </DialogDescription>
+          </DialogHeader>
+          {previewLayout && <DeckLayoutPreview layout={previewLayout} />}
+        </DialogContent>
+      </Dialog>
     </Form>
   );
 }

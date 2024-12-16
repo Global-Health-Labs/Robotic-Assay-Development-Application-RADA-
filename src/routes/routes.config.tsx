@@ -1,31 +1,27 @@
 import ProtectedLayout from '@/components/layout/ProtectedLayout';
 import PublicLayout from '@/components/layout/PublicLayout';
+import { PageLoading } from '@/components/ui/page-loading';
+import ErrorPage from '@/pages/error/ErrorPage';
+import NotFoundPage from '@/pages/error/NotFoundPage';
 import SettingsLayout from '@/pages/settings/SettingsLayout';
 import { ComponentType } from 'react';
-import { createBrowserRouter, RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 
 interface LazyModule {
   default: ComponentType;
 }
 
-const LoadingFallback = () => (
-  <div className="flex h-screen items-center justify-center">
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-900">Loading...</h2>
-    </div>
-  </div>
-);
-
 const importComponent = (module: Promise<LazyModule>) => {
   return module.then((m) => ({
     Component: m.default,
-    HydrateFallback: LoadingFallback,
+    HydrateFallback: () => <PageLoading />,
   }));
 };
 
-export const publicRoutes: RouteObject[] = [
+const publicRoutes: RouteObject[] = [
   {
     element: <PublicLayout />,
+    errorElement: <ErrorPage />,
     children: [
       {
         path: '/login',
@@ -67,34 +63,63 @@ export const publicRoutes: RouteObject[] = [
   // }
 ];
 
-export const protectedRoutes: RouteObject[] = [
+const protectedRoutes: RouteObject[] = [
   {
     element: <ProtectedLayout />,
+    errorElement: <ErrorPage />,
     children: [
+      {
+        path: '/',
+        element: <Navigate to="/experiments" replace />,
+      },
       {
         index: true,
         path: '/experiments',
         lazy: () => importComponent(import('@/pages/experiments/ExperimentsPage')),
       },
       {
-        path: '/experiments/new',
-        lazy: () => importComponent(import('@/pages/experiments/ExperimentPlanDetailsPage')),
+        path: '/experiments/naat/new',
+        lazy: () => importComponent(import('@/pages/experiments/NAATExperimentDetailsPage')),
       },
       {
-        path: '/experiments/:id/edit',
-        lazy: () => importComponent(import('@/pages/experiments/ExperimentPlanDetailsPage')),
+        path: '/experiments/naat/:id/edit',
+        lazy: () => importComponent(import('@/pages/experiments/NAATExperimentDetailsPage')),
       },
       {
-        path: '/experiments/:id/mastermix',
+        path: '/experiments/naat/:id/mastermix',
         lazy: () => importComponent(import('@/pages/experiments/MastermixPage')),
       },
       {
-        path: '/experiments/:id/export',
+        path: '/experiments/naat/:id/export',
         lazy: () => importComponent(import('@/pages/experiments/ExperimentExportPage')),
       },
       {
-        path: '/experiments/:id/instructions',
+        path: '/experiments/naat/:id/instructions',
         lazy: () => importComponent(import('@/pages/experiments/RoboInstructionViewerPage')),
+      },
+      {
+        path: '/experiments/lfa/new',
+        lazy: () => importComponent(import('@/pages/experiments/LFAExperimentDetailsPage')),
+      },
+      {
+        path: '/experiments/lfa/:id',
+        lazy: () => importComponent(import('@/pages/experiments/LFAExperimentDetailsPage')),
+      },
+      {
+        path: '/experiments/lfa/:id/edit',
+        lazy: () => importComponent(import('@/pages/experiments/LFAExperimentDetailsPage')),
+      },
+      {
+        path: '/experiments/lfa/:id/export',
+        lazy: () => importComponent(import('@/pages/experiments/ExperimentExportPage')),
+      },
+      {
+        path: '/experiments/lfa/:id/instructions',
+        lazy: () => importComponent(import('@/pages/experiments/RoboInstructionViewerPage')),
+      },
+      {
+        path: '/experiments/lfa/:id/steps',
+        lazy: () => importComponent(import('@/pages/experiments/EditLFAStepsPage')),
       },
       {
         path: '/settings',
@@ -105,12 +130,16 @@ export const protectedRoutes: RouteObject[] = [
             lazy: () => importComponent(import('@/pages/settings/UsersPage')),
           },
           {
-            path: 'liquid-types',
+            path: 'naat/liquid-types',
             lazy: () => importComponent(import('@/pages/settings/ManageLiquidTypesPage')),
           },
           {
-            path: 'volume-units',
+            path: 'naat/volume-units',
             lazy: () => importComponent(import('@/pages/settings/ManageVolumeUnitsPage')),
+          },
+          {
+            path: 'naat/deck-layout',
+            lazy: () => importComponent(import('@/pages/settings/DeckLayoutSettingsPage')),
           },
         ],
       },
@@ -144,13 +173,11 @@ export const protectedRoutes: RouteObject[] = [
   // }
 ];
 
-export const router = createBrowserRouter([...publicRoutes, ...protectedRoutes]);
-
-export const hideNavBarRoutes: string[] = [
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/reset-password',
-  '/email-sent',
-  '/resend-confirmation-email',
-];
+export const router = createBrowserRouter([
+  ...publicRoutes,
+  ...protectedRoutes,
+  {
+    path: '*',
+    element: <NotFoundPage />,
+  },
+]);

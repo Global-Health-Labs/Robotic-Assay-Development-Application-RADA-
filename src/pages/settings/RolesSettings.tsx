@@ -79,7 +79,7 @@ const RolesSettings = () => {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">User Role Management</h1>
+        <h2 className="text-2xl font-bold tracking-tight">User Role Management</h2>
         <p className="text-muted-foreground">Manage user roles and permissions</p>
       </div>
 
@@ -113,9 +113,7 @@ const RolesSettings = () => {
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell>
-                  {new Date(user.role_updated_at).toLocaleDateString()}
-                </TableCell>
+                <TableCell>{new Date(user.role_updated_at).toLocaleDateString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>

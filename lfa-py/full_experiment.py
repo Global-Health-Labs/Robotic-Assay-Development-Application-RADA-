@@ -41,11 +41,12 @@ def make_worklist_full_2d(exp_input, delimiter_cell, delimiter_col,  # info abou
     :param prefix: prefix for output filenames
     :return: none
     """
+    # gets step/dx/dz/volume/liquid_class/time/source
     sub_exp_input_list = get_sub_exp_input_list(exp_input, coord0, coord1,
                                                 nsub0, nsub1, delimiter_cell, delimiter_col)
 
+    # write output_run_assay_worklist/factorial_experiment0.csv
     input_files = write_sub_exp_input_list(sub_exp_input_list, output_dir, prefix)
-
     for each in input_files:
         output_prefix = each[:-4] + '_'
         temp = make_worklist_one_run(pd.read_csv(each), delimiter_cell, delimiter_col,  # info about experiment input file

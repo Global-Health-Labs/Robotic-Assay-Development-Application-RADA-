@@ -1,6 +1,6 @@
 import { VALUE, SAMPLE_MM } from '../config/worklist/DefaultValues';
 import { getTotalWellsPerMastermix, getToPlate_AQ } from './WellPlateCalculation';
-import { Experiment, Mastermix } from '@/api/experiments.api';
+import { Experiment, Mastermix } from '@/api/naat-experiments.api';
 
 interface WorklistData {
   step: string;
@@ -36,7 +36,7 @@ export const getSampleWorklistData = (
 ): WorklistData[] => {
   const data: WorklistData[] = [];
   const totalNumOfMastermixes = listOfMastermixes.length;
-  const plateSize = parseInt(experimentalPlanData[0].pcrPlateSize); // 96 or 364
+  const plateSize = Number(experimentalPlanData[0].pcrPlateSize); // 96 or 364
   let groupNumber = 1;
   let toWell = 1;
   let fromWell = 1;

@@ -18,11 +18,12 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Edit2, Search, X } from 'lucide-react';
+import { Check, Edit2, Search, UserCheck, UserX, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AddUserDialog } from './components/AddUserDialog';
 import dayjs from 'dayjs';
+import { cn } from '@/lib/utils';
 
 interface User {
   id: string;
@@ -30,6 +31,7 @@ interface User {
   email: string;
   role: string;
   role_updated_at: string;
+  status: 'active' | 'disabled';
 }
 
 type EditState = {
@@ -76,6 +78,20 @@ export default function UsersPage() {
     },
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'disabled' }) => {
+      const response = await axios.put(`/users/${id}/status`, { status });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User status updated successfully');
+    },
+    onError: () => {
+      toast.error('Failed to update user status');
+    },
+  });
+
   const handleEdit = (user: User) => {
     if (editState?.id === user.id) {
       setEditState(null);
@@ -108,6 +124,11 @@ export default function UsersPage() {
     setEditState(null);
   };
 
+  const handleToggleStatus = (user: User) => {
+    const newStatus = user.status === 'active' ? 'disabled' : 'active';
+    toggleStatusMutation.mutate({ id: user.id, status: newStatus });
+  };
+
   if (currentUserRole !== 'admin') {
     return (
       <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
@@ -130,7 +151,7 @@ export default function UsersPage() {
     <div className="w-full max-w-4xl space-y-4">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Users</h3>
+          <h2 className="text-2xl font-bold tracking-tight">Users</h2>
           <p className="mb-4 text-sm text-muted-foreground">Manage user accounts and roles</p>
         </div>
 
@@ -193,7 +214,14 @@ export default function UsersPage() {
                       }}
                     />
                   ) : (
-                    user.fullname
+                    <div className="flex items-center gap-2">
+                      <span>{user.fullname}</span>
+                      {user.status === 'disabled' && (
+                        <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-800">
+                          Disabled
+                        </span>
+                      )}
+                    </div>
                   )}
                 </TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -231,9 +259,33 @@ export default function UsersPage() {
                         </Button>
                       </>
                     ) : (
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(user)}>
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(user)}
+                          title="Edit user"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        {currentUserId !== user.id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              user.status === 'active' ? 'text-destructive' : 'text-primary'
+                            )}
+                            onClick={() => handleToggleStatus(user)}
+                            title={user.status === 'active' ? 'Disable user' : 'Enable user'}
+                          >
+                            {user.status === 'active' ? (
+                              <UserX className="h-4 w-4" />
+                            ) : (
+                              <UserCheck className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </TableCell>

@@ -27,8 +27,12 @@ def patch_input(exp_input):
     :return: dataframe with extra columns
     """
     # determine step index and step group index based on timing
+    # print("patch_input: exp_input.shape\n", exp_input.shape)
+    # print('np.arange(exp_input.shape[0])', (np.arange(exp_input.shape[0])+1))
+    #print("patch_input: exp_input::before\n", exp_input)
     exp_input['step_index'] = np.arange(exp_input.shape[0]) + 1
     exp_input['step_group_index'] = exp_input['step_index']
+    # print("exp_input['step_index']", exp_input['step_index'])
     for i in range(exp_input.shape[0] - 1):
         if exp_input.loc[i, 'time'] == 0:
             exp_input.loc[i + 1, 'step_group_index'] = exp_input.loc[i, 'step_group_index']
@@ -36,7 +40,7 @@ def patch_input(exp_input):
     exp_input['previous_step_index'] = exp_input['step_index'] - 1
     no_time_index = np.setdiff1d(np.where(exp_input['time'] <= 0)[0] + 1, [exp_input.shape[0]])
     exp_input.loc[no_time_index, 'previous_step_index'] = 0
-
+    #print("patch_input: exp_input::after\n", exp_input)
     return exp_input
 
 
@@ -55,7 +59,7 @@ def get_perm_df(exp_input, nrep, delimiter_cell, delimiter_col, reverse_var):
         return len(str(cell_string).replace(' ', '').split(delimiter_cell))
 
     # identify cells with variations
-    exp_input_count = exp_input.applymap(count_each_cell)
+    exp_input_count = exp_input.map(count_each_cell)
     multi_list = np.transpose(np.where(exp_input_count > 1))
 
     # make lists to permutate
@@ -105,7 +109,7 @@ def get_worklist_from_perm(exp_input, perm_df, npergroup, delimiter_col):
             coord = np.array(perm_each_col.split(delimiter_col)).astype(int)
             temp.iloc[tuple(coord)] = perm[perm_each_col]
 
-        worklist = worklist.append(temp, ignore_index=True, sort=False)
+        worklist = pd.concat([worklist, temp], ignore_index=True, sort=False)
 
     # determine destination group based on the number of strips to do at once
     all_dst = np.sort(worklist['destination'].unique())
@@ -126,7 +130,7 @@ def get_worklist_from_perm(exp_input, perm_df, npergroup, delimiter_col):
     to_append['previous_step_index'] = 0
     to_append['previous_group'] = 0
     to_append = to_append.drop_duplicates().reset_index(drop=True)
-    previous_group_df = previous_group_df.append(to_append, ignore_index=True, sort=False)
+    previous_group_df = pd.concat([previous_group_df, to_append], ignore_index=True, sort=False)
     worklist = worklist.merge(previous_group_df).reset_index(drop=True)
 
     worklist = worklist.sort_values(['step_group_index', 'destination_group', 'step_index', 'destination'])
@@ -386,14 +390,14 @@ def make_worklist_one_run(exp_input, delimiter_cell, delimiter_col,  # info abou
     :param time_df: dataframe, time it takes to run steps
     :return: dictionary of worklist and source dataframes
     """
-    # protocol definition
-    # full factorial worklist
     factorial = get_worklist_full_factorial(exp_input=exp_input,
                                             nrep=nrep,
                                             npergroup=npergroup,
                                             delimiter_cell=delimiter_cell,
                                             delimiter_col=delimiter_col,
                                             reverse_var=reverse_var)
+    print('FACTORIAL', factorial)
+    #print('nrep:', nrep, 'npergroup:', npergroup, 'delimiter_cell:', delimiter_cell, 'delimiter_col:', delimiter_col, 'reverse_var:', reverse_var)
     worklist = factorial['worklist']
     worklist_raw = worklist.copy()
 
@@ -413,10 +417,12 @@ def make_worklist_one_run(exp_input, delimiter_cell, delimiter_col,  # info abou
                           sort_by_col=sort_by_col)
 
     # source assignment
+    #print('PlateDF before assigning source:', plate_df)
     source_out = assign_src(worklist=worklist,
                             plate_df=plate_df,
                             nzfill=nzfill)
 
+    #print('PlateDF after assigning source:', plate_df)
     worklist = source_out['worklist']
     source_df = source_out['source_df']
 

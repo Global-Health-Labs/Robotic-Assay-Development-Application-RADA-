@@ -200,7 +200,7 @@ export default function ManageLiquidTypesPage() {
     <div className="w-full max-w-4xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Liquid Types</h3>
+          <h2 className="text-2xl font-bold tracking-tight">Liquid Types</h2>
           <p className="mb-4 text-sm text-muted-foreground">
             Manage the available liquid types for experiments.
           </p>

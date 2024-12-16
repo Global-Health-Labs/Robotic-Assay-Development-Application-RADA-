@@ -53,9 +53,9 @@ def reorder_groups(worklist, exp_time):
     next_df = pd.DataFrame() # rearranged queue, to execute each strip first
     for dst_group in np.sort(time_worklist['destination_group'].unique()):
         sub = time_worklist[time_worklist['destination_group'] == dst_group].sort_values('group')
-        sub['group_forward'] = np.append(sub['group'].values[1:], [0]).astype(np.int)
-        sub['group_backward'] = np.append([0], sub['group'].values[:-1]).astype(np.int)
-        next_df = next_df.append(sub, sort=False)
+        sub['group_forward'] = np.append(sub['group'].values[1:], [0]).astype(np.int64)
+        sub['group_backward'] = np.append([0], sub['group'].values[:-1]).astype(np.int64)
+        next_df = pd.concat([next_df, sub], ignore_index=True, sort=False)
     # original queue of actions, merged with next_df to have group_forward and group_backward
     time_worklist = time_worklist.merge(next_df)
 
@@ -65,20 +65,26 @@ def reorder_groups(worklist, exp_time):
 
     while time_worklist.shape[0] > 0:
         sub = time_worklist[time_worklist['group'] == current_group]
+        
+        if sub.empty:
+            # If no rows found for current group, move to the next available group
+            current_group = time_worklist['group'].min()
+            continue
 
         # adjust exp_time in case there is some waiting involved
         # note that if there is no waiting, previous_group = 0
         previous_group = sub['previous_group'].values[0]
         if previous_group > 0:
             sub_previous = time_new[time_new['group'] == previous_group]
-            # current_clock = time_new['clock_1'].max()
-            delta = time_new['clock_1'].max() - sub_previous['clock_0'].values[0]
-            wait_time = sub_previous['time'].values[0] - delta
-            if wait_time < 0:
-                wait_time = 0
-            sub.loc[:, 'exp_time'] = sub.loc[:, 'exp_time'] + wait_time
+            if not sub_previous.empty:
+                # current_clock = time_new['clock_1'].max()
+                delta = time_new['clock_1'].max() - sub_previous['clock_0'].values[0]
+                wait_time = sub_previous['time'].values[0] - delta
+                if wait_time < 0:
+                    wait_time = 0
+                sub.loc[:, 'exp_time'] = sub.loc[:, 'exp_time'] + wait_time
 
-        time_new = time_new.append(sub, sort=False)
+        time_new = pd.concat([time_new, sub], ignore_index=True, sort=False)
         time_worklist = time_worklist.drop(sub.index.values)
 
         if time_worklist.shape[0] == 0:
@@ -88,26 +94,51 @@ def reorder_groups(worklist, exp_time):
             time_new.loc[:, 'clock_1'] = time_new['exp_time'].cumsum()  # clock when the action finishes
             time_new.loc[:, 'clock_0'] = time_new['clock_1'] - time_new['exp_time']  # clock when the action starts
             time_new['time_late'] = time_new['clock_0'] + time_new['time'] - time_new['clock_1'].max()
-            time_new.loc[:, 'alarm_quiet'] = np.any([
-                (time_new['time'] == -1).values, # flexible wait time in this case
-                (time_new['time_late'] > 0).values # there is still time
-            ], axis=0)
+            # Convert to boolean mask explicitly
+            mask = (time_new['time'] == -1) | (time_new['time_late'] > 0)
+            time_new.loc[:, 'alarm_quiet'] = mask
 
-            next_group = time_new.loc[~time_new['alarm_quiet'], 'group_forward'].values
-            next_group = np.setdiff1d(next_group, time_new['group'].unique())  # remove groups already in queue
-            next_group = next_group[next_group > 0]
-            if next_group.shape[0] > 0:
-                group_late = time_worklist.loc[time_worklist['group'].isin(next_group), 'group_backward'].values
-                sub_late = time_new.loc[time_new['group'].isin(group_late)]
-                # priority: sub_late['time'] == 0, 'imaging', then the step that is the most late
-                next_step = [time_worklist.loc[time_worklist['group'] == each, 'step'].values[0]
-                             for each in sub_late['group_forward'].values]
-                sub_late['next_step'] = next_step
-                sub_late['priority'] = 2
-                sub_late.loc[sub_late['next_step'] == 'imaging', 'priority'] = 1
-                sub_late.loc[sub_late['time'] == 0, 'priority'] = 0
-                sub_late = sub_late.sort_values(['priority', 'time_late'])
-                current_group = sub_late['group_forward'].values[0]
+            # Get groups that need attention (not alarm_quiet)
+            active_groups = time_new[~mask]
+            if not active_groups.empty:
+                next_group = active_groups['group_forward'].values
+                next_group = next_group[next_group > 0]  # Remove 0 values
+                next_group = np.setdiff1d(next_group, time_new['group'].unique())  # remove groups already in queue
+            else:
+                next_group = np.array([])
+            
+            if len(next_group) > 0:
+                # Create a copy to avoid SettingWithCopyWarning
+                group_late = time_worklist[time_worklist['group'].isin(next_group)].copy()
+                if not group_late.empty:
+                    # Get next steps safely
+                    next_steps = []
+                    for each in group_late['group_backward'].values:
+                        group_steps = time_worklist[time_worklist['group'] == each]
+                        if not group_steps.empty:
+                            next_steps.append(group_steps['step'].values[0])
+                        else:
+                            next_steps.append('')
+                    
+                    # Calculate time_late for group_late
+                    group_late.loc[:, 'time_late'] = time_new['time_late'].min() if not time_new.empty else 0
+                    group_late.loc[:, 'next_step'] = next_steps
+                    group_late.loc[:, 'priority'] = 2
+                    group_late.loc[group_late['next_step'] == 'imaging', 'priority'] = 1
+                    group_late.loc[group_late['time'] == 0, 'priority'] = 0
+                    
+                    # Sort only by priority if time_late is all the same
+                    if group_late['time_late'].nunique() == 1:
+                        group_late = group_late.sort_values('priority')
+                    else:
+                        group_late = group_late.sort_values(['priority', 'time_late'])
+                    
+                    if not group_late.empty:
+                        current_group = group_late['group_forward'].values[0]
+                    else:
+                        current_group = time_worklist['group'].min()
+                else:
+                    current_group = time_worklist['group'].min()
             else:
                 current_group = time_worklist['group'].min()
     time_new.loc[:, 'clock_1'] = time_new['exp_time'].cumsum()  # clock when the action finishes
@@ -141,4 +172,3 @@ def reset_group(worklist):
     worklist.loc[:, 'previous_group'] = worklist.loc[:, 'previous_group'].fillna(0)
 
     return worklist
-

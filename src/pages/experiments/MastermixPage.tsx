@@ -1,5 +1,13 @@
-import { getExperiment, getMastermix, Mastermix, updateMastermix } from '@/api/experiments.api';
+import {
+  getExperiment,
+  getMastermix,
+  Mastermix,
+  updateMastermix,
+} from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
+import { PageLoading } from '@/components/ui/page-loading';
+import { useLiquidTypes } from '@/hooks/useLiquidTypes';
+import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 import { MastermixTable } from '@/pages/experiments/components/MastermixTable';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -21,6 +29,9 @@ export default function MastermixPage() {
     queryFn: () => getMastermix(id!),
     enabled: !!id,
   });
+
+  const { data: liquidTypes, isLoading: liquidTypesLoading } = useLiquidTypes();
+  const { data: volumeUnits, isLoading: volumeUnitsLoading } = useVolumeUnits();
 
   // Local state for mastermix data
   const [localMastermixes, setLocalMastermixes] = useState<Mastermix[]>([]);
@@ -52,8 +63,8 @@ export default function MastermixPage() {
     },
   });
 
-  if (isLoadingExperiment || isLoadingMastermix) {
-    return <div>Loading...</div>;
+  if (isLoadingExperiment || isLoadingMastermix || liquidTypesLoading || volumeUnitsLoading) {
+    return <PageLoading />;
   }
 
   if (!experiment) {
@@ -95,12 +106,10 @@ export default function MastermixPage() {
         {
           id: crypto.randomUUID(),
           source: '',
-          unit: 'µL',
-          /* eslint-disable @typescript-eslint/no-explicit-any */
-          finalConcentration: '' as any,
-          stockConcentration: '' as any,
-          /* eslint-enable @typescript-eslint/no-explicit-any */
-          liquidType: 'Water',
+          unit: volumeUnits ? volumeUnits[0].unit : '',
+          finalConcentration: '' as unknown as number,
+          stockConcentration: '' as unknown as number,
+          liquidType: liquidTypes ? liquidTypes[0].value : '',
         },
       ],
     };

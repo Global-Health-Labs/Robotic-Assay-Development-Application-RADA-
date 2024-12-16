@@ -4,23 +4,32 @@ import {
   getExperiment,
   NewExperiment,
   updateExperiment,
-} from '@/api/experiments.api';
-import { ExperimentForm } from '@/pages/experiments/components/ExperimentForm';
+} from '@/api/naat-experiments.api';
+import { PageLoading } from '@/components/ui/page-loading';
+import { NAATExperimentForm } from '@/pages/experiments/components/NAATExperimentForm';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { isEmpty } from 'lodash-es';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-export default function ExperimentPlanDetailsPage() {
+export default function NAATExperimentDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const isEditMode = Boolean(id);
+  const isEditMode = !isEmpty(id);
 
   const { data: experimentData, isLoading } = useQuery({
     queryKey: ['experiment', id],
     queryFn: () => getExperiment(id!),
     enabled: isEditMode,
   });
+
+  useEffect(() => {
+    if (!isLoading && isEditMode && !experimentData) {
+      navigate('/experiments');
+    }
+  }, [isEditMode, experimentData, navigate, isLoading]);
 
   const experimentMutation = useMutation({
     mutationFn: (data: Experiment | NewExperiment) => {
@@ -32,6 +41,7 @@ export default function ExperimentPlanDetailsPage() {
           mastermixVolumePerReaction: data.mastermixVolumePerReaction,
           sampleVolumePerReaction: data.sampleVolumePerReaction,
           pcrPlateSize: data.pcrPlateSize,
+          deckLayoutId: data.deckLayoutId,
         });
       } else {
         return createExperiment({
@@ -41,6 +51,7 @@ export default function ExperimentPlanDetailsPage() {
           mastermixVolumePerReaction: data.mastermixVolumePerReaction,
           sampleVolumePerReaction: data.sampleVolumePerReaction,
           pcrPlateSize: data.pcrPlateSize,
+          deckLayoutId: data.deckLayoutId,
         });
       }
     },
@@ -52,7 +63,7 @@ export default function ExperimentPlanDetailsPage() {
       if (isEditMode) {
         queryClient.invalidateQueries({ queryKey: ['experiment', experiment.id] });
       }
-      navigate(`/experiments/${experiment.id}/mastermix`);
+      navigate(`/experiments/naat/${experiment.id}/mastermix`);
     },
     onError: () => {
       toast.error(
@@ -67,16 +78,16 @@ export default function ExperimentPlanDetailsPage() {
     if (isDirty) {
       experimentMutation.mutate(data);
     } else if (isEditMode) {
-      navigate(`/experiments/${id}/mastermix`);
+      navigate(`/experiments/naat/${id}/mastermix`);
     }
   };
 
   if (isEditMode && isLoading) {
-    return <div>Loading experiment data...</div>;
+    return <PageLoading />;
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="max-w-2xl py-4 md:py-10">
       <div className="mb-8">
         <h2 className="text-3xl font-bold tracking-tight">
           {isEditMode ? 'Edit Experiment' : 'Create New Experiment'}
@@ -88,7 +99,7 @@ export default function ExperimentPlanDetailsPage() {
         </p>
       </div>
 
-      <ExperimentForm
+      <NAATExperimentForm
         mode={isEditMode ? 'edit' : 'create'}
         defaultValues={experimentData}
         onSubmit={(data, isDirty) => handleSubmit(data, isDirty)}

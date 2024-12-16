@@ -1,4 +1,4 @@
-import { ExperimentWithMastermix } from '@/api/experiments.api';
+import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,

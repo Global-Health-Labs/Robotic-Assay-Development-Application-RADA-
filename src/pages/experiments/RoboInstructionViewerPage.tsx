@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getExperiment } from '@/api/experiments.api';
+import { getExperiment } from '@/api/naat-experiments.api';
 import InteractiveRoboInstructionViewer from '@/components/instruction-viewer/InteractiveRoboInstructionViewer';
 import { CircularProgress } from '@mui/material';
 

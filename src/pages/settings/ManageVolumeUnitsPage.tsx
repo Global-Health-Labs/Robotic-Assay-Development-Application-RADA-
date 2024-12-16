@@ -185,7 +185,7 @@ export default function ManageVolumeUnitsPage() {
     <div className="w-full max-w-4xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Volume Units</h3>
+          <h2 className="text-2xl font-bold tracking-tight">Volume Units</h2>
           <p className="mb-4 text-sm text-muted-foreground">
             Manage the available volume units for experiments.
           </p>

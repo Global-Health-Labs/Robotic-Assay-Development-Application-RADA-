@@ -1,9 +1,9 @@
 import {
+  cloneExperiment,
   Experiment,
   ExperimentFilters,
   getExperiments,
-  cloneExperiment,
-} from '@/api/experiments.api';
+} from '@/api/naat-experiments.api';
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header';
 import { useTableState } from '@/components/data-table/table-state';
@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PageLoading } from '@/components/ui/page-loading';
 import {
   Select,
   SelectContent,
@@ -23,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
@@ -76,28 +76,31 @@ const ExperimentActions: React.FC<ExperimentActionsProps> = ({ experiment }) => 
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link to={`/experiments/${experiment.id}/edit`}>
+          <Link
+            to={`/experiments/${experiment.type === 'LFA' ? 'lfa' : 'naat'}/${experiment.id}/edit`}
+          >
             <DropdownMenuItem className="cursor-pointer">
               <Edit2 className="mr-2 h-4 w-4" />
               Edit Experiment
             </DropdownMenuItem>
           </Link>
-          <Link to={`/experiments/${experiment.id}/export`}>
+          <Link
+            to={`/experiments/${experiment.type === 'LFA' ? 'lfa' : 'naat'}/${experiment.id}/export`}
+          >
             <DropdownMenuItem className="cursor-pointer">
               <FileText className="mr-2 h-4 w-4" />
               Export Worklist Files
             </DropdownMenuItem>
           </Link>
-          <Link to={`/experiments/${experiment.id}/instructions`}>
+          <Link
+            to={`/experiments/${experiment.type === 'LFA' ? 'lfa' : 'naat'}/${experiment.id}/instructions`}
+          >
             <DropdownMenuItem className="cursor-pointer">
               <FileText className="mr-2 h-4 w-4" />
               View Robo Instructions
             </DropdownMenuItem>
           </Link>
-          <DropdownMenuItem
-            onClick={() => setUploadDialogOpen(true)}
-            className="cursor-pointer"
-          >
+          <DropdownMenuItem onClick={() => setUploadDialogOpen(true)} className="cursor-pointer">
             <Upload className="mr-2 h-4 w-4" />
             Upload Files
           </DropdownMenuItem>
@@ -152,64 +155,64 @@ export const columns: ColumnDef<Experiment>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Owner" />,
     enableSorting: true,
   },
-  {
-    accessorKey: 'numOfSampleConcentrations',
-    header: ({ column }) => (
-      <div className="hidden lg:block">
-        <DataTableColumnHeader column={column} title="Number of Samples" />
-      </div>
-    ),
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="hidden lg:block">{row.getValue('numOfSampleConcentrations')}</div>
-    ),
-  },
-  {
-    accessorKey: 'numOfTechnicalReplicates',
-    header: ({ column }) => (
-      <div className="hidden lg:block">
-        <DataTableColumnHeader column={column} title="Technical Replicates" />
-      </div>
-    ),
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="hidden lg:block">{row.getValue('numOfTechnicalReplicates')}</div>
-    ),
-  },
-  {
-    accessorKey: 'mastermixVolumePerReaction',
-    header: ({ column }) => (
-      <div className="hidden lg:block">
-        <DataTableColumnHeader column={column} title="Mastermix Volume (µL)" />
-      </div>
-    ),
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="hidden lg:block">{row.getValue('mastermixVolumePerReaction')}</div>
-    ),
-  },
-  {
-    accessorKey: 'sampleVolumePerReaction',
-    header: ({ column }) => (
-      <div className="hidden lg:block">
-        <DataTableColumnHeader column={column} title="Sample Volume (µL)" />
-      </div>
-    ),
-    enableSorting: false,
-    cell: ({ row }) => (
-      <div className="hidden lg:block">{row.getValue('sampleVolumePerReaction')}</div>
-    ),
-  },
-  {
-    accessorKey: 'pcrPlateSize',
-    header: ({ column }) => (
-      <div className="hidden lg:block">
-        <DataTableColumnHeader column={column} title="PCR Plate Size" />
-      </div>
-    ),
-    enableSorting: false,
-    cell: ({ row }) => <div className="hidden lg:block">{row.getValue('pcrPlateSize')}</div>,
-  },
+  // {
+  //   accessorKey: 'numOfSampleConcentrations',
+  //   header: ({ column }) => (
+  //     <div className="hidden lg:block">
+  //       <DataTableColumnHeader column={column} title="Number of Samples" />
+  //     </div>
+  //   ),
+  //   enableSorting: false,
+  //   cell: ({ row }) => (
+  //     <div className="hidden lg:block">{row.getValue('numOfSampleConcentrations')}</div>
+  //   ),
+  // },
+  // {
+  //   accessorKey: 'numOfTechnicalReplicates',
+  //   header: ({ column }) => (
+  //     <div className="hidden lg:block">
+  //       <DataTableColumnHeader column={column} title="Technical Replicates" />
+  //     </div>
+  //   ),
+  //   enableSorting: false,
+  //   cell: ({ row }) => (
+  //     <div className="hidden lg:block">{row.getValue('numOfTechnicalReplicates')}</div>
+  //   ),
+  // },
+  // {
+  //   accessorKey: 'mastermixVolumePerReaction',
+  //   header: ({ column }) => (
+  //     <div className="hidden lg:block">
+  //       <DataTableColumnHeader column={column} title="Mastermix Volume (µL)" />
+  //     </div>
+  //   ),
+  //   enableSorting: false,
+  //   cell: ({ row }) => (
+  //     <div className="hidden lg:block">{row.getValue('mastermixVolumePerReaction')}</div>
+  //   ),
+  // },
+  // {
+  //   accessorKey: 'sampleVolumePerReaction',
+  //   header: ({ column }) => (
+  //     <div className="hidden lg:block">
+  //       <DataTableColumnHeader column={column} title="Sample Volume (µL)" />
+  //     </div>
+  //   ),
+  //   enableSorting: false,
+  //   cell: ({ row }) => (
+  //     <div className="hidden lg:block">{row.getValue('sampleVolumePerReaction')}</div>
+  //   ),
+  // },
+  // {
+  //   accessorKey: 'pcrPlateSize',
+  //   header: ({ column }) => (
+  //     <div className="hidden lg:block">
+  //       <DataTableColumnHeader column={column} title="PCR Plate Size" />
+  //     </div>
+  //   ),
+  //   enableSorting: false,
+  //   cell: ({ row }) => <div className="hidden lg:block">{row.getValue('pcrPlateSize')}</div>,
+  // },
   {
     id: 'actions',
     header: 'Actions',
@@ -222,7 +225,6 @@ export default function ExperimentsPage() {
   const setPagination = useTableState((state) => state.setPagination);
   const sorting = useTableState((state) => state.sorting);
   const setSorting = useTableState((state) => state.setSorting);
-
   const [filters, setFilters] = useState<ExperimentFilters>({
     page: pagination.pageIndex + 1,
     perPage: pagination.pageSize,
@@ -256,7 +258,7 @@ export default function ExperimentsPage() {
     }
   }, [sorting]);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['experiments', filters],
     queryFn: () => getExperiments(filters),
     placeholderData: keepPreviousData,
@@ -266,7 +268,7 @@ export default function ExperimentsPage() {
   if (isLoading && !isFetching) {
     return (
       <div className="py-10">
-        <Skeleton className="h-[450px] w-full" />
+        <PageLoading />
       </div>
     );
   }
@@ -279,9 +281,14 @@ export default function ExperimentsPage() {
             <h2 className="text-2xl font-bold tracking-tight">Experiments</h2>
             <p className="text-muted-foreground">Manage and track your experimental plans</p>
           </div>
-          <Link to="/experiments/new" className="ml-auto">
-            <Button>New Experiment</Button>
-          </Link>
+          <div className="ml-auto flex gap-4">
+            <Link to="/experiments/lfa/new">
+              <Button variant="outline">New LFA Experiment</Button>
+            </Link>
+            <Link to="/experiments/naat/new">
+              <Button>New NAAT Experiment</Button>
+            </Link>
+          </div>
         </div>
         <div className="flex flex-col">
           <div className="flex items-center space-x-2">

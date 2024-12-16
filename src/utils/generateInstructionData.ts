@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getMastermixWorklistData } from './generateMastermixWorklist';
 import { getSampleWorklistData } from './generateSampleWorklist';
-import { Experiment, Mastermix } from '@/api/experiments.api';
+import { Experiment, Mastermix } from '@/api/naat-experiments.api';
 import { uniq } from 'lodash-es';
 
 // interface MastermixWorklistData {

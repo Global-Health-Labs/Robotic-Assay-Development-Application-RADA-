@@ -1,3 +1,4 @@
+import { Reagent } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -8,16 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DROPDOWN_OPTIONS } from '@/config/FormInputValues';
+import { LiquidType } from '@/hooks/useLiquidTypes';
+import { VolumeUnit } from '@/hooks/useVolumeUnits';
 import { cn } from '@/lib/utils';
-import { LIQUID_TYPE } from '@/utils/ExtractLiquidClass';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CopyPlus, Trash2Icon } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useLiquidTypes } from '@/hooks/useLiquidTypes';
-import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 
 const CONCENTRATION_VALIDATION_MESSAGE =
   'Final concentration must be less than or equal to stock concentration';
@@ -63,7 +62,11 @@ const reagentSchema = z
       .min(0.00001, 'Must be greater than 0')
       .max(1000, 'Must be less than 1000')
       .refine((val) => !isNaN(val), 'Required'),
-    liquidType: z.string().min(1, 'Required'),
+    liquidType: z
+      .string({
+        required_error: 'Required',
+      })
+      .min(1, 'Required'),
   })
   .refine(validateConcentration, {
     message: CONCENTRATION_VALIDATION_MESSAGE,
@@ -73,14 +76,9 @@ const reagentSchema = z
 type ReagentFormValues = z.infer<typeof reagentSchema>;
 
 interface ReagentDetailsProps {
-  reagent: {
-    id: string;
-    source: string;
-    unit: string;
-    finalConcentration: number;
-    stockConcentration: number;
-    liquidType: string;
-  };
+  reagent: Reagent;
+  liquidTypes: LiquidType[];
+  volumeUnits: VolumeUnit[];
   canDelete?: boolean;
   onUpdate: (field: keyof ReagentFormValues, value: string | number) => void;
   onDelete: () => void;
@@ -94,11 +92,10 @@ export function ReagentDetails({
   onUpdate,
   onDelete,
   onClone,
+  liquidTypes,
+  volumeUnits,
   onValidationChange,
 }: ReagentDetailsProps) {
-  const { data: liquidTypes } = useLiquidTypes();
-  const { data: volumeUnits } = useVolumeUnits();
-
   const form = useForm<ReagentFormValues>({
     resolver: zodResolver(reagentSchema),
     defaultValues: {
@@ -207,7 +204,7 @@ export function ReagentDetails({
           <FormItem>
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl>
-                <SelectTrigger>
+                <SelectTrigger className="text-left">
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
               </FormControl>
