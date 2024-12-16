@@ -32,7 +32,7 @@ export const SolutionsTable: FC<Props> = ({
   onPlateWellChange,
 }) => {
   const [instructionData, setInstructionData] = useState(
-    getInstructionData(experiment.masterMixes, [experiment])
+    getInstructionData(experiment.mastermixes, [experiment])
   );
 
   const handleIsDoneChange = (rowId: string, isDone: boolean) => {

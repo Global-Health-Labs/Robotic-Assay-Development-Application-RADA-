@@ -11,12 +11,13 @@ import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 import { MastermixTable } from '@/pages/experiments/components/MastermixTable';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function MastermixPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: experiment, isLoading: isLoadingExperiment } = useQuery({
     queryKey: ['experiment', id],
@@ -57,6 +58,7 @@ export default function MastermixPage() {
       queryClient.invalidateQueries({ queryKey: ['mastermix', id] });
       setIsDirty(false);
       setIsSubmitted(true);
+      navigate(`/experiments/naat/${id}/export`);
     },
     onError: () => {
       toast.error('Failed to update mastermix');
@@ -121,7 +123,7 @@ export default function MastermixPage() {
   console.log('isDirty:', isDirty, 'isValid:', isValid);
 
   return (
-    <div className="py-10">
+    <div className="max-w-5xl py-4 md:py-10">
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
@@ -152,7 +154,7 @@ export default function MastermixPage() {
             onClick={handleSave}
             disabled={!isValid || !isDirty || updateMastermixMutation.isPending}
           >
-            {updateMastermixMutation.isPending ? 'Saving...' : 'Save Changes'}
+            {updateMastermixMutation.isPending ? 'Saving...' : 'Save & Continue'}
           </Button>
         </div>
       </div>

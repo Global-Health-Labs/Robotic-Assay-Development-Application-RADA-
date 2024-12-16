@@ -84,7 +84,7 @@ function SortablePlate({ plate }: { plate: PlateItem }) {
       )}
     >
       {plate.name}
-      <div className="mt-1 text-xs text-muted-foreground">{PLATE_LAYOUT_NAME[plate.id]}</div>
+      <div className="mt-1 text-xs">{PLATE_LAYOUT_NAME[plate.id]}</div>
     </div>
   );
 }
