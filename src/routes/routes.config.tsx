@@ -91,15 +91,11 @@ const protectedRoutes: RouteObject[] = [
       },
       {
         path: '/experiments/naat/:id/export',
-        lazy: () => importComponent(import('@/pages/experiments/ExperimentExportPage')),
+        lazy: () => importComponent(import('@/pages/experiments/NAATExperimentExportPage')),
       },
       {
         path: '/experiments/naat/:id/instructions',
-        lazy: () => importComponent(import('@/pages/experiments/RoboInstructionViewerPage')),
-      },
-      {
-        path: '/experiments/lfa/new',
-        lazy: () => importComponent(import('@/pages/experiments/LFAExperimentDetailsPage')),
+        lazy: () => importComponent(import('@/pages/experiments/NAATRoboInstructionViewerPage')),
       },
       {
         path: '/experiments/lfa/:id',
@@ -111,16 +107,17 @@ const protectedRoutes: RouteObject[] = [
       },
       {
         path: '/experiments/lfa/:id/export',
-        lazy: () => importComponent(import('@/pages/experiments/ExperimentExportPage')),
-      },
-      {
-        path: '/experiments/lfa/:id/instructions',
-        lazy: () => importComponent(import('@/pages/experiments/RoboInstructionViewerPage')),
+        lazy: () => importComponent(import('@/pages/experiments/LFAExperimentExportPage')),
       },
       {
         path: '/experiments/lfa/:id/steps',
         lazy: () => importComponent(import('@/pages/experiments/EditLFAStepsPage')),
       },
+      {
+        path: '/experiments/lfa/:id/instructions',
+        lazy: () => importComponent(import('@/pages/experiments/LFARoboInstructionViewerPage')),
+      },
+
       {
         path: '/settings',
         element: <SettingsLayout />,
@@ -131,15 +128,27 @@ const protectedRoutes: RouteObject[] = [
           },
           {
             path: 'naat/liquid-types',
-            lazy: () => importComponent(import('@/pages/settings/ManageLiquidTypesPage')),
+            lazy: () => importComponent(import('@/pages/settings/naat/ManageNAATLiquidTypesPage')),
           },
           {
             path: 'naat/volume-units',
-            lazy: () => importComponent(import('@/pages/settings/ManageVolumeUnitsPage')),
+            lazy: () => importComponent(import('@/pages/settings/naat/ManageNAATVolumeUnitsPage')),
           },
           {
             path: 'naat/deck-layout',
-            lazy: () => importComponent(import('@/pages/settings/DeckLayoutSettingsPage')),
+            lazy: () => importComponent(import('@/pages/settings/naat/NAATDeckLayoutSettingsPage')),
+          },
+          {
+            path: 'lfa/assay-plate-config',
+            lazy: () => importComponent(import('@/pages/settings/lfa/ManageAssayPlateConfigPage')),
+          },
+          {
+            path: 'lfa/liquid-types',
+            lazy: () => importComponent(import('@/pages/settings/lfa/ManageLFALiquidTypesPage')),
+          },
+          {
+            path: 'lfa/reagent-plates',
+            lazy: () => importComponent(import('@/pages/settings/lfa/ManageLFAReagentPlatesPage')),
           },
         ],
       },

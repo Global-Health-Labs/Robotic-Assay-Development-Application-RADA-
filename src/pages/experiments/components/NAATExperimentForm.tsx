@@ -1,5 +1,5 @@
 import axios from '@/api/axios';
-import { DeckLayout, Experiment, NewExperiment } from '@/api/naat-experiments.api';
+import { DeckLayout, NAATExperiment, NewNAATExperiment } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -31,7 +31,7 @@ import * as z from 'zod';
 
 const formSchema = z
   .object({
-    nameOfExperimentalPlan: z
+    name: z
       .string({
         required_error: 'Name of experimental plan is required',
       })
@@ -85,14 +85,14 @@ export type FormValues = z.infer<typeof formSchema>;
 const PCR_PLATE_SIZES = ['96', '384'];
 
 interface ExperimentFormProps {
-  defaultValues?: Experiment;
-  onSubmit: (data: NewExperiment, isDirty: boolean) => void;
+  defaultValues?: NAATExperiment;
+  onSubmit: (data: NewNAATExperiment, isDirty: boolean) => void;
   isSubmitting?: boolean;
   onCancel: () => void;
   mode: 'create' | 'edit';
 }
 
-const getFormDefaultValues = (experiment?: Experiment): FormValues => {
+const getFormDefaultValues = (experiment?: NAATExperiment): FormValues => {
   if (experiment) {
     return {
       ...experiment,
@@ -100,7 +100,7 @@ const getFormDefaultValues = (experiment?: Experiment): FormValues => {
     };
   }
   return {
-    nameOfExperimentalPlan: '',
+    name: '',
     /* eslint-disable @typescript-eslint/no-explicit-any */
     numOfSampleConcentrations: '' as any,
     numOfTechnicalReplicates: '' as any,
@@ -164,7 +164,7 @@ export function NAATExperimentForm({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="nameOfExperimentalPlan"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Name of Experimental Plan</FormLabel>
@@ -172,16 +172,14 @@ export function NAATExperimentForm({
                 <Input
                   placeholder="Enter experiment name"
                   {...field}
-                  onFocus={() => setFocusedField('nameOfExperimentalPlan')}
+                  onFocus={() => setFocusedField('name')}
                   onBlur={() => setFocusedField(null)}
                 />
               </FormControl>
               <FormDescription
                 className={cn(
                   'transition-colors duration-200',
-                  focusedField === 'nameOfExperimentalPlan'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
+                  focusedField === 'name' ? 'text-muted-foreground' : 'text-muted-foreground/50'
                 )}
               >
                 A unique name to identify your experimental plan

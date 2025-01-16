@@ -1,5 +1,5 @@
+import { LFAStep, useLFAExperiment } from '@/api/lfa-experiments.api';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -16,19 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useLFALiquidTypes } from '@/hooks/useLFALiquidTypes';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { size } from 'lodash-es';
+import { Trash2 } from 'lucide-react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ASSAY_PLATE_CONFIGS } from './assay-plate-config';
-import { generateWorklistFiles } from '@/lib/lfa-worklist-generator';
-import { toast } from 'sonner';
 
 const stepSchema = z.object({
   step: z.string().min(1, 'Step name is required'),
   location: z.string().min(1, 'Location is required'),
-  volume: z.number().min(0, 'Volume must be non-negative'),
-  liquid_class: z.string().min(1, 'Liquid class is required'),
-  time: z.number(),
+  volume: z.number().min(0, 'Volume must be a positive number'),
+  liquidClass: z.string().min(1, 'Liquid type is required'),
+  time: z.number().min(0, 'Time must be a positive number'),
   source: z.string().min(1, 'Source is required'),
 });
 
@@ -39,59 +39,41 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface LFAStepsFormProps {
-  onSubmit: (values: {
-    steps: Array<{
-      step: string;
-      dx: number;
-      dz: number;
-      volume: number;
-      liquid_class: string;
-      time: number;
-      source: string;
-    }>;
-  }) => void;
+  onSubmit: (values: { steps: LFAStep[] }) => void;
   onBack: () => void;
-  plateConfigId?: string;
-  steps?: Array<{
-    step: string;
-    dx: number;
-    dz: number;
-    volume: number;
-    liquid_class: string;
-    time: number;
-    source: string;
-  }>;
+  experimentId: string;
 }
 
-const liquidClasses = ['water', 'pbst', 'imaging'];
+export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormProps) {
+  const { data: experimentData } = useLFAExperiment(experimentId);
 
-export function LFAStepsForm({
-  onSubmit,
-  onBack,
-  plateConfigId = 'lfa-96-standard',
-  steps,
-}: LFAStepsFormProps) {
-  const plateConfig = ASSAY_PLATE_CONFIGS.find((config) => config.id === plateConfigId);
+  const plateConfig = experimentData?.plateConfig;
   const locations = plateConfig?.locations || [];
+  const steps = experimentData?.steps || [];
+
+  const { data: liquidTypes = [] } = useLFALiquidTypes();
 
   const defaultStep = {
     step: '',
     location: '',
     volume: 0,
-    liquid_class: '',
+    liquidClass: '',
     time: 0,
     source: '',
   };
 
   // Transform incoming steps to form format (with location string instead of dx/dz)
-  const initialSteps = steps?.map((step) => ({
-    step: step.step,
-    location: `${step.dx},${step.dz}`,
-    volume: step.volume,
-    liquid_class: step.liquid_class,
-    time: step.time,
-    source: step.source,
-  })) || [defaultStep];
+  const initialSteps =
+    size(steps) > 0
+      ? steps?.map((step) => ({
+          step: step.step,
+          location: `${step.dx},${step.dz}`,
+          volume: step.volume,
+          liquidClass: step.liquidClass,
+          time: step.time,
+          source: step.source,
+        }))
+      : [defaultStep];
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -115,7 +97,7 @@ export function LFAStepsForm({
           dx,
           dz,
           volume: step.volume,
-          liquid_class: step.liquid_class,
+          liquidClass: step.liquidClass,
           time: step.time,
           source: step.source,
         };
@@ -130,105 +112,23 @@ export function LFAStepsForm({
     }
   };
 
-  const handleGenerateWorklist = () => {
-    const values = form.getValues();
-    const steps = values.steps.map((step) => {
-      const [dx, dz] = step.location.split(',').map(Number);
-      return {
-        step: step.step,
-        dx,
-        dz,
-        volume: step.volume,
-        liquid_class: step.liquid_class,
-        time: step.time,
-        source: step.source,
-      };
-    });
-
-    // Create PlateConfig from AssayPlateConfig
-    const worklistPlateConfig = {
-      prefix: plateConfig?.assayPlate.name || 'IVL_Plate',
-      numPlates: plateConfig?.assayPlate.numPlates || 1,
-      numStripsPerPlate: plateConfig?.assayPlate.numStrips || 96,
-      numColumns: plateConfig?.assayPlate.numColumns || 6,
-      sourcePlates: {
-        'ivl_384_flat_v1': {
-          name: 'ivl_384_flat_v1',
-          wellCount: 384,
-          holdoverVolume: 10,
-          wellVolume: 100
-        },
-        'ivl_96_dw_v1': {
-          name: 'ivl_96_dw_v1',
-          wellCount: 96,
-          holdoverVolume: 50,
-          wellVolume: 1000
-        }
-      },
-      name: plateConfig?.name || 'LFA Standard',
-      wellCount: plateConfig?.assayPlate.numStrips || 96
-    };
-
-    try {
-      const { worklistCsv, userSolutionCsv } = generateWorklistFiles(steps, worklistPlateConfig, {
-        numReplicates: plateConfig?.replicatesPerSample || 1,
-        stripsPerGroup: 8,
-        reverseVariableOrder: false,
-        dispenseType: 'jet_empty',
-        aspirationMixing: true,
-        zeroFill: 2,
-        sortByColumn: false
-      });
-
-      // Create and download worklist CSV
-      const worklistBlob = new Blob([worklistCsv], { type: 'text/csv' });
-      const worklistUrl = window.URL.createObjectURL(worklistBlob);
-      const worklistLink = document.createElement('a');
-      worklistLink.href = worklistUrl;
-      worklistLink.setAttribute('download', 'worklist.csv');
-      document.body.appendChild(worklistLink);
-      worklistLink.click();
-      document.body.removeChild(worklistLink);
-
-      // Create and download user solution CSV
-      const userSolutionBlob = new Blob([userSolutionCsv], { type: 'text/csv' });
-      const userSolutionUrl = window.URL.createObjectURL(userSolutionBlob);
-      const userSolutionLink = document.createElement('a');
-      userSolutionLink.href = userSolutionUrl;
-      userSolutionLink.setAttribute('download', 'user_solutions.csv');
-      document.body.appendChild(userSolutionLink);
-      userSolutionLink.click();
-      document.body.removeChild(userSolutionLink);
-
-      toast.success('Worklist files generated successfully');
-    } catch (error) {
-      console.error('Error generating worklist files:', error);
-      toast.error('Error generating worklist files');
-    }
-  };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <Card className="p-6">
+        <div className="p-6">
           <div className="space-y-6">
             {fields.map((field, index) => (
-              <div key={field.id} className="space-y-4 rounded-lg border p-4">
+              <div key={field.id} className="space-y-4 rounded-lg border p-4 shadow">
                 <div className="flex items-center justify-between">
                   <h4 className="text-lg font-semibold">Step {index + 1}</h4>
                   {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => remove(index)}
-                    >
-                      Remove
+                    <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
+                      <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name={`steps.${index}.step`}
@@ -288,20 +188,20 @@ export function LFAStepsForm({
 
                   <FormField
                     control={form.control}
-                    name={`steps.${index}.liquid_class`}
+                    name={`steps.${index}.liquidClass`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Liquid Class</FormLabel>
+                        <FormLabel>Liquid Type</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select liquid class" />
+                              <SelectValue placeholder="Select liquid type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {liquidClasses.map((lc) => (
-                              <SelectItem key={lc} value={lc}>
-                                {lc}
+                            {liquidTypes.map(({ value, displayName }) => (
+                              <SelectItem key={value} value={value}>
+                                {displayName}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -346,33 +246,35 @@ export function LFAStepsForm({
               </div>
             ))}
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() =>
-                append({
-                  step: '',
-                  location: '',
-                  volume: 0,
-                  liquid_class: '',
-                  time: 0,
-                  source: '',
-                })
-              }
-            >
-              Add Step
-            </Button>
+            <div className="flex w-full justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  append({
+                    step: '',
+                    location: '',
+                    volume: 0,
+                    liquidClass: '',
+                    time: 0,
+                    source: '',
+                  })
+                }
+              >
+                Add Step
+              </Button>
+            </div>
           </div>
-        </Card>
+        </div>
 
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={onBack}>
             Back
           </Button>
           <Button type="submit">Save and Continue</Button>
-          <Button type="button" onClick={handleGenerateWorklist}>
+          {/* <Button type="button" onClick={handleGenerateWorklist}>
             Generate Worklist
-          </Button>
+          </Button> */}
         </div>
       </form>
     </Form>

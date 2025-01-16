@@ -1,4 +1,4 @@
-import { Experiment, Mastermix } from '@/api/naat-experiments.api';
+import { NAATExperiment, Mastermix } from '@/api/naat-experiments.api';
 import {
   SourceKeyPair,
   VolumeSourcePair,
@@ -29,7 +29,7 @@ import * as wl from './WorklistCalculation';
  */
 export const getMastermixWorklistData = (
   listOfMastermixes: Mastermix[],
-  experimentalPlanData: Experiment[],
+  experimentalPlanData: NAATExperiment[],
   generateAllData: boolean
 ): WorklistData[] => {
   const data: WorklistData[] = [];
@@ -371,7 +371,7 @@ const generateMixingSteps = (
  */
 const generateAliquotingStep = (
   listOfMastermixes: Mastermix[],
-  experimentalPlanData: Experiment[],
+  experimentalPlanData: NAATExperiment[],
   mm_groupNumber: number,
   numOfWells: number
 ): WorklistData[] => {

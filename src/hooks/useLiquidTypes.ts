@@ -11,13 +11,13 @@ export type LiquidType = {
 };
 
 const fetchLiquidTypes = async (): Promise<LiquidType[]> => {
-  const { data } = await axios.get<LiquidType[]>('/settings/liquid-types');
+  const { data } = await axios.get<LiquidType[]>('/settings/naat/liquid-types');
   return data;
 };
 
 export function useLiquidTypes() {
   return useQuery({
-    queryKey: ['liquid-types'],
+    queryKey: ['naat-liquid-types'],
     queryFn: fetchLiquidTypes,
     staleTime: 30 * 60 * 1000, // Consider data fresh for 5 minutes
   });

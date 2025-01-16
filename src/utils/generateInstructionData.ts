@@ -1,16 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getMastermixWorklistData } from './generateMastermixWorklist';
 import { getSampleWorklistData } from './generateSampleWorklist';
-import { Experiment, Mastermix } from '@/api/naat-experiments.api';
+import { NAATExperiment, Mastermix } from '@/api/naat-experiments.api';
 import { uniq } from 'lodash-es';
-
-// interface MastermixWorklistData {
-//   from_well_U: number;
-//   from_plate_T: string;
-//   source_G: string;
-//   volume_uL_D: number;
-//   wellPlatePair?: string;
-// }
 
 interface InstructionData {
   id: string;
@@ -29,7 +21,7 @@ interface InstructionData {
  */
 export const getInstructionData = (
   listOfMastermixes: Mastermix[],
-  experimentalPlanData: Experiment[]
+  experimentalPlanData: NAATExperiment[]
 ): InstructionData[] => {
   const data: InstructionData[] = [];
 

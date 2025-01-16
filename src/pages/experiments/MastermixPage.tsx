@@ -1,5 +1,5 @@
 import {
-  getExperiment,
+  getNAATExperiment,
   getMastermix,
   Mastermix,
   updateMastermix,
@@ -21,7 +21,7 @@ export default function MastermixPage() {
 
   const { data: experiment, isLoading: isLoadingExperiment } = useQuery({
     queryKey: ['experiment', id],
-    queryFn: () => getExperiment(id!),
+    queryFn: () => getNAATExperiment(id!),
     enabled: !!id,
   });
 
@@ -119,8 +119,6 @@ export default function MastermixPage() {
     setLocalMastermixes([...localMastermixes, newMastermix]);
     setIsDirty(true); // Set dirty flag when adding new mastermix
   };
-
-  console.log('isDirty:', isDirty, 'isValid:', isValid);
 
   return (
     <div className="max-w-5xl py-4 md:py-10">

@@ -88,6 +88,23 @@ const sidebarNavItems = [
       },
     ],
   },
+  {
+    title: 'LFA Configurations',
+    children: [
+      {
+        title: 'Assay Plate Configuration',
+        href: '/settings/lfa/assay-plate-config',
+      },
+      {
+        title: 'Liquid Types',
+        href: '/settings/lfa/liquid-types',
+      },
+      {
+        title: 'Reagent Plates',
+        href: '/settings/lfa/reagent-plates',
+      },
+    ],
+  },
 ];
 
 export default function SettingsLayout() {

@@ -1,30 +1,45 @@
-import { getLFAExperiment } from '@/api/lfa-experiments.api';
-import { getExperiment } from '@/api/naat-experiments.api';
+import {
+  getLFAExperimentQueryKey,
+  LFAStep,
+  updateLFAExperimentSteps,
+  useLFAExperiment,
+} from '@/api/lfa-experiments.api';
 import { LFAStepsForm } from '@/pages/experiments/components/LFAStepsForm';
-import { useQuery } from '@tanstack/react-query';
-import { isEmpty } from 'lodash-es';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function EditLFAStepsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditMode = !isEmpty(id);
+  const queryClient = useQueryClient();
 
-  const { data: experimentData, isLoading } = useQuery({
-    queryKey: ['experiment', id],
-    queryFn: () => getLFAExperiment(id!),
-    enabled: isEditMode,
+  const { data: experimentData, isLoading } = useLFAExperiment(id!);
+
+  useEffect(() => {
+    if (!isLoading && !experimentData) {
+      navigate('/experiments');
+
+      toast.error('Experiment not found');
+    }
+  }, [experimentData, navigate, isLoading]);
+
+  const mutation = useMutation({
+    mutationFn: (steps: LFAStep[]) => updateLFAExperimentSteps(id!, steps),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getLFAExperimentQueryKey(id!) });
+      toast.success('Steps saved successfully');
+      navigate(`/experiments/lfa/${id}/export`);
+    },
+    onError: (error) => {
+      console.error('Failed to save steps:', error);
+      toast.error('Failed to save steps');
+    },
   });
 
-  const handleSubmit = async (values: any) => {
-    try {
-      // TODO: Add API call to save steps
-      toast.success('Steps saved successfully');
-      navigate(`/experiments/lfa/${id}/worklist`);
-    } catch (error) {
-      toast.error('Failed to save steps');
-    }
+  const handleSubmit = async (values: { steps: LFAStep[] }) => {
+    mutation.mutate(values.steps);
   };
 
   const handleBack = () => {
@@ -32,7 +47,7 @@ export default function EditLFAStepsPage() {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="py-4 md:py-10">
       {isLoading ? (
         <div>Loading...</div>
       ) : (
@@ -40,16 +55,17 @@ export default function EditLFAStepsPage() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Configure LFA Experiment Steps</h1>
             <p className="text-muted-foreground">
-              Define the steps for experiment: {experimentData?.nameOfExperimentalPlan}
+              Define the steps for experiment: {experimentData?.name}
             </p>
           </div>
 
-          <LFAStepsForm 
-            onSubmit={handleSubmit} 
-            onBack={handleBack} 
-            plateConfigId={experimentData?.plateConfigId}
-            steps={experimentData?.steps}
-          />
+          {experimentData && (
+            <LFAStepsForm
+              onSubmit={handleSubmit}
+              onBack={handleBack}
+              experimentId={experimentData.id}
+            />
+          )}
         </div>
       )}
     </div>

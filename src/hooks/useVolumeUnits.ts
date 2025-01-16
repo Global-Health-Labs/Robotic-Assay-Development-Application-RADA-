@@ -10,7 +10,7 @@ export type VolumeUnit = {
 };
 
 const fetchVolumeUnits = async (): Promise<VolumeUnit[]> => {
-  const { data } = await axios.get<VolumeUnit[]>('/settings/volume-units');
+  const { data } = await axios.get<VolumeUnit[]>('/settings/naat/volume-units');
   return data;
 };
 

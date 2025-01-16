@@ -1,9 +1,9 @@
 import {
-  createExperiment,
-  Experiment,
-  getExperiment,
-  NewExperiment,
-  updateExperiment,
+  createNAATExperiment,
+  NAATExperiment,
+  getNAATExperiment,
+  NewNAATExperiment,
+  updateNAATExperiment,
 } from '@/api/naat-experiments.api';
 import { PageLoading } from '@/components/ui/page-loading';
 import { NAATExperimentForm } from '@/pages/experiments/components/NAATExperimentForm';
@@ -21,7 +21,7 @@ export default function NAATExperimentDetailsPage() {
 
   const { data: experimentData, isLoading } = useQuery({
     queryKey: ['experiment', id],
-    queryFn: () => getExperiment(id!),
+    queryFn: () => getNAATExperiment(id!),
     enabled: isEditMode,
   });
 
@@ -32,10 +32,10 @@ export default function NAATExperimentDetailsPage() {
   }, [isEditMode, experimentData, navigate, isLoading]);
 
   const experimentMutation = useMutation({
-    mutationFn: (data: Experiment | NewExperiment) => {
+    mutationFn: (data: NAATExperiment | NewNAATExperiment) => {
       if (isEditMode) {
-        return updateExperiment(id!, {
-          nameOfExperimentalPlan: data.nameOfExperimentalPlan,
+        return updateNAATExperiment(id!, {
+          name: data.name,
           numOfSampleConcentrations: data.numOfSampleConcentrations,
           numOfTechnicalReplicates: data.numOfTechnicalReplicates,
           mastermixVolumePerReaction: data.mastermixVolumePerReaction,
@@ -44,8 +44,8 @@ export default function NAATExperimentDetailsPage() {
           deckLayoutId: data.deckLayoutId,
         });
       } else {
-        return createExperiment({
-          nameOfExperimentalPlan: data.nameOfExperimentalPlan,
+        return createNAATExperiment({
+          name: data.name,
           numOfSampleConcentrations: data.numOfSampleConcentrations,
           numOfTechnicalReplicates: data.numOfTechnicalReplicates,
           mastermixVolumePerReaction: data.mastermixVolumePerReaction,
@@ -74,7 +74,7 @@ export default function NAATExperimentDetailsPage() {
     },
   });
 
-  const handleSubmit = (data: Experiment | NewExperiment, isDirty: boolean) => {
+  const handleSubmit = (data: NAATExperiment | NewNAATExperiment, isDirty: boolean) => {
     if (isDirty) {
       experimentMutation.mutate(data);
     } else if (isEditMode) {

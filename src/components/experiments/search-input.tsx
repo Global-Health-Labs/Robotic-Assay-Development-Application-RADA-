@@ -34,7 +34,7 @@ export function SearchInput({
       placeholder={placeholder}
       value={value}
       onChange={handleChange}
-      className="max-w-sm"
+      className="w-full"
     />
   );
 }

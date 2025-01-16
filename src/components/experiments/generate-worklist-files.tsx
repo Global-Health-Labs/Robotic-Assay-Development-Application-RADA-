@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { CSVLink } from 'react-csv';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, FileText, Table } from 'lucide-react';
+import { Download, FileText, Grid3x3, Table } from 'lucide-react';
 import { getMastermixWorklistData } from '@/utils/generateMastermixWorklist';
 import { getSampleWorklistData } from '@/utils/generateSampleWorklist';
-import { Experiment, Mastermix } from '@/api/naat-experiments.api';
+import { NAATExperiment, Mastermix } from '@/api/naat-experiments.api';
 import { WorklistData } from '@/utils/experiment.types';
+import { Link } from 'react-router-dom';
 
 const FILE_NAME = {
   EXPERIMENTAL_PLAN: 'experimental-plan-RoboNAAT.txt',
@@ -17,7 +18,7 @@ const FILE_NAME = {
 const SPECIAL_CHAR_FILE = '*****-----*****';
 
 interface GenerateWorklistFilesProps {
-  experiment: Experiment[];
+  experiment: NAATExperiment[];
   mastermixes: Mastermix[];
 }
 
@@ -97,6 +98,21 @@ export function GenerateWorklistFiles({ experiment, mastermixes }: GenerateWorkl
               Download CSV
             </Button>
           </CSVLink>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Robot Instructions</CardTitle>
+          <CardDescription>View the robot instructions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link to={`/experiments/naat/${experiment[0].id}/instructions`} className="w-full">
+            <Button className="w-full">
+              <Grid3x3 className="mr-2 h-4 w-4" />
+              View Instructions
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>

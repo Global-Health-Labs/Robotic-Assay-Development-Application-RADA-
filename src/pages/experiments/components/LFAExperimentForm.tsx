@@ -1,4 +1,5 @@
 import { LFAExperiment, NewLFAExperiment } from '@/api/lfa-experiments.api';
+import { getLFAConfigs } from '@/api/lfa-settings.api';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -19,24 +20,18 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { AssayPlateConfig } from '@/types/lfa.types';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { values } from 'lodash-es';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ASSAY_PLATE_CONFIGS } from './assay-plate-config';
 
 const formSchema = z.object({
-  nameOfExperimentalPlan: z
+  name: z
     .string({
       required_error: 'Name of experimental plan is required',
     })
@@ -46,29 +41,14 @@ const formSchema = z.object({
       required_error: 'Plate configuration is required',
     })
     .min(1, 'Plate configuration is required'),
-  numOfSampleConcentrations: z.coerce
-    .number()
-    .min(1, 'Number of samples must be 1 or greater')
-    .max(100, 'Number of samples cannot exceed 100')
-    .int('Number of samples must be a whole number'),
-  numOfTechnicalReplicates: z.coerce
+  numReplicates: z.coerce
     .number()
     .min(1, 'Number of technical replicates must be 1 or greater')
     .max(50, 'Number of technical replicates cannot exceed 50')
     .int('Number of technical replicates must be a whole number'),
-  plateName: z
-    .string({
-      required_error: 'Plate name is required',
-    })
-    .min(1, 'Plate name is required'),
-  plateSize: z.enum(['96', '384'], {
-    required_error: 'Plate size is required',
-  }),
 });
 
 export type FormValues = z.infer<typeof formSchema>;
-
-const PLATE_SIZES = ['96', '384'];
 
 interface LFAExperimentFormProps {
   defaultValues?: LFAExperiment;
@@ -81,23 +61,17 @@ interface LFAExperimentFormProps {
 const getFormDefaultValues = (experiment?: LFAExperiment): FormValues => {
   if (experiment) {
     return {
-      nameOfExperimentalPlan: experiment.nameOfExperimentalPlan,
+      name: experiment.name,
       plateConfigId: experiment.plateConfigId || '',
-      numOfSampleConcentrations: experiment.numOfSampleConcentrations,
-      numOfTechnicalReplicates: experiment.numOfTechnicalReplicates,
-      plateName: experiment.plateName || '',
-      plateSize: experiment.plateSize?.toString() || '96',
+      numReplicates: experiment.numReplicates,
     };
   }
   return {
-    nameOfExperimentalPlan: '',
+    name: '',
     plateConfigId: '',
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    numOfSampleConcentrations: '' as any,
-    numOfTechnicalReplicates: '' as any,
+    numReplicates: '' as any,
     /* eslint-enable @typescript-eslint/no-explicit-any */
-    plateName: '',
-    plateSize: PLATE_SIZES[0],
   };
 };
 
@@ -110,6 +84,10 @@ export function LFAExperimentForm({
 }: LFAExperimentFormProps) {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const { data: configs = [], isLoading } = useQuery<AssayPlateConfig[]>({
+    queryKey: ['assayPlateConfigs'],
+    queryFn: getLFAConfigs,
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -119,19 +97,17 @@ export function LFAExperimentForm({
 
   const handleSubmit = (data: FormValues) => {
     const isDirty = values(form.formState.dirtyFields).some((dirty) => dirty);
-    onSubmit(data, isDirty);
+    onSubmit({ ...data, type: 'LFA' }, isDirty);
   };
 
-  const selectedConfig = ASSAY_PLATE_CONFIGS.find(
-    (config) => config.id === form.watch('plateConfigId')
-  );
+  const selectedConfig = configs.find((config) => config.id === form.watch('plateConfigId'));
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="nameOfExperimentalPlan"
+          name="name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Name of Experimental Plan</FormLabel>
@@ -139,16 +115,14 @@ export function LFAExperimentForm({
                 <Input
                   placeholder="Enter experiment name"
                   {...field}
-                  onFocus={() => setFocusedField('nameOfExperimentalPlan')}
+                  onFocus={() => setFocusedField('name')}
                   onBlur={() => setFocusedField(null)}
                 />
               </FormControl>
               <FormDescription
                 className={cn(
                   'transition-colors duration-200',
-                  focusedField === 'nameOfExperimentalPlan'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
+                  focusedField === 'name' ? 'text-muted-foreground' : 'text-muted-foreground/50'
                 )}
               >
                 A unique name to identify your LFA experimental plan
@@ -170,28 +144,30 @@ export function LFAExperimentForm({
                     <Button
                       variant="outline"
                       role="combobox"
+                      aria-expanded={open}
                       className={cn('justify-between', !field.value && 'text-muted-foreground')}
                     >
-                      {field.value
-                        ? ASSAY_PLATE_CONFIGS.find((config) => config.id === field.value)?.name
-                        : 'Select plate configuration'}
+                      {isLoading
+                        ? 'Loading configurations...'
+                        : field.value
+                          ? configs.find((config) => config.id === field.value)?.name
+                          : 'Select plate configuration'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="p-0" align="start">
+                <PopoverContent className="p-0">
                   <Command>
-                    <CommandInput placeholder="Search plate configurations..." />
-                    <CommandEmpty>No plate configuration found.</CommandEmpty>
-                    <CommandGroup>
-                      <CommandList>
-                        {ASSAY_PLATE_CONFIGS.map((config) => (
+                    <CommandInput placeholder="Search configurations..." />
+                    <CommandList>
+                      <CommandEmpty>No configurations found.</CommandEmpty>
+                      <CommandGroup>
+                        {configs.map((config) => (
                           <CommandItem
                             key={config.id}
                             value={config.id}
                             onSelect={() => {
                               form.setValue('plateConfigId', config.id);
-                              form.setValue('plateSize', config.plateSize);
                               setOpen(false);
                             }}
                           >
@@ -201,33 +177,19 @@ export function LFAExperimentForm({
                                 config.id === field.value ? 'opacity-100' : 'opacity-0'
                               )}
                             />
-                            <div className="flex flex-col">
-                              <span>{config.name}</span>
-                              <span className="text-sm text-muted-foreground">
+                            <div>
+                              <div>{config.name}</div>
+                              <div className="text-xs text-muted-foreground">
                                 {config.description}
-                              </span>
+                              </div>
                             </div>
                           </CommandItem>
                         ))}
-                      </CommandList>
-                    </CommandGroup>
+                      </CommandGroup>
+                    </CommandList>
                   </Command>
                 </PopoverContent>
               </Popover>
-              {selectedConfig && (
-                <div className="mt-2 rounded-md bg-muted p-4 text-sm">
-                  <div className="mb-2 font-medium">Configuration Details:</div>
-                  <ul className="list-inside list-disc space-y-1 text-muted-foreground">
-                    <li>Plate Size: {selectedConfig.plateSize}-well</li>
-                    <li>Max Samples: {selectedConfig.maxSamples}</li>
-                    <li>Replicates per Sample: {selectedConfig.replicatesPerSample}</li>
-                    <li>
-                      Controls: {selectedConfig.controlWells.positiveControls.length} positive,{' '}
-                      {selectedConfig.controlWells.negativeControls.length} negative
-                    </li>
-                  </ul>
-                </div>
-              )}
               <FormDescription
                 className={cn(
                   'transition-colors duration-200',
@@ -239,49 +201,35 @@ export function LFAExperimentForm({
                 Select a predefined plate configuration for your experiment
               </FormDescription>
               <FormMessage />
+              {selectedConfig && (
+                <div className="mt-2 rounded-md bg-muted p-4 text-sm">
+                  <div className="mb-2 font-medium">Configuration Details:</div>
+                  <div className="flex gap-2">
+                    <div className="flex flex-col gap-1 text-muted-foreground">
+                      <div>Number of Plates</div>
+                      <div>Strips per Plate</div>
+                      <div>Number of Columns</div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <div>{selectedConfig.numPlates}</div>
+                      <div>{selectedConfig.numStrips}</div>
+                      <div>{selectedConfig.numColumns}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </FormItem>
           )}
         />
 
         <FormField
           control={form.control}
-          name="numOfSampleConcentrations"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Number of Samples</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  {...field}
-                  onFocus={() => setFocusedField('numOfSampleConcentrations')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </FormControl>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'numOfSampleConcentrations'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Total number of samples to be tested
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="numOfTechnicalReplicates"
+          name="numReplicates"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Technical Replicates</FormLabel>
               <FormControl>
                 <Input
-                  type="number"
                   min={1}
                   {...field}
                   onFocus={() => setFocusedField('numOfTechnicalReplicates')}
@@ -297,72 +245,6 @@ export function LFAExperimentForm({
                 )}
               >
                 Number of replicates per sample
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="plateName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Plate Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter plate name"
-                  {...field}
-                  onFocus={() => setFocusedField('plateName')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </FormControl>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'plateName'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Name or identifier for the plate
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="plateSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Plate Size</FormLabel>
-              <Select
-                value={field.value}
-                onValueChange={(value) => {
-                  field.onChange(value);
-                }}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select plate size" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="96">96-well plate</SelectItem>
-                  <SelectItem value="384">384-well plate</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'plateSize'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Size of the plate to be used
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { createExperiment } from '@/api/naat-experiments.api';
+import { createNAATExperiment } from '@/api/naat-experiments.api';
 import { Plus } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -48,7 +48,7 @@ export function CreateExperimentDialog() {
   });
 
   const mutation = useMutation({
-    mutationFn: createExperiment,
+    mutationFn: createNAATExperiment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['experiments'] });
       toast({

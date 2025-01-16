@@ -1,4 +1,0 @@
-step,dx,dz,volume,liquid_class,time,source
-conjugate,13,0.2,1,water,-1,"CS031, CS033"
-sample,0,1,75,pbst,1200,"D001-N1, D001-P1, D002-N1, D002-P1, D003-N1, D003-P1, R007-N1, R007-P1, D004-N1, D004-P1, ABI-131-N1, ABI-131-P1"
-imaging,24,0,0,imaging,600,camera

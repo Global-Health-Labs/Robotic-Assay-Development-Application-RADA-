@@ -1,13 +1,14 @@
 import {
   createLFAExperiment,
-  getLFAExperiment,
+  getLFAExperimentQueryKey,
+  LFA_EXPERIMENT_QUERY_KEY,
   LFAExperiment,
   NewLFAExperiment,
   updateLFAExperiment,
+  useLFAExperiment,
 } from '@/api/lfa-experiments.api';
 import { LFAExperimentForm } from '@/pages/experiments/components/LFAExperimentForm';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { isEmpty } from 'lodash-es';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -15,24 +16,17 @@ export default function LFAExperimentDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const isEditMode = !isEmpty(id);
+  const isEditMode = id !== 'new';
 
-  const { data: experimentData, isLoading } = useQuery({
-    queryKey: ['lfa-experiment', id],
-    queryFn: () => getLFAExperiment(id!),
-    enabled: isEditMode,
-  });
+  const { data: experimentData, isLoading } = useLFAExperiment(id!, !isEditMode);
 
   const experimentMutation = useMutation({
     mutationFn: (data: LFAExperiment | NewLFAExperiment) => {
       const experimentData: NewLFAExperiment = {
-        nameOfExperimentalPlan: data.nameOfExperimentalPlan,
-        numOfSampleConcentrations: data.numOfSampleConcentrations,
-        numOfTechnicalReplicates: data.numOfTechnicalReplicates,
-        plateName: data.plateName,
-        plateSize: data.plateSize,
+        name: data.name,
+        numReplicates: data.numReplicates,
         plateConfigId: data.plateConfigId,
-        type: 'LFA'
+        type: 'LFA',
       };
 
       if (isEditMode) {
@@ -47,7 +41,7 @@ export default function LFAExperimentDetailsPage() {
       );
       queryClient.invalidateQueries({ queryKey: ['experiments'] });
       if (isEditMode) {
-        queryClient.invalidateQueries({ queryKey: ['experiment', experiment.id] });
+        queryClient.invalidateQueries({ queryKey: getLFAExperimentQueryKey(id!) });
       }
       navigate(`/experiments/lfa/${experiment.id}/steps`);
     },

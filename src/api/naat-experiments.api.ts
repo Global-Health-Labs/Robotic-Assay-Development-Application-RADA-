@@ -1,27 +1,9 @@
 import axios from './axios';
 import { DispenseType } from '../utils/ExtractLiquidClass';
+import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    currentPage: number;
-    lastPage: number;
-    perPage: number;
-  };
-}
-
-export interface ExperimentFilters {
-  page?: number;
-  perPage?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  search?: string;
-  status?: string;
-}
-
-export type NewExperiment = {
-  nameOfExperimentalPlan: string;
+export type NewNAATExperiment = {
+  name: string;
   numOfSampleConcentrations: number;
   numOfTechnicalReplicates: number;
   mastermixVolumePerReaction: number;
@@ -30,12 +12,10 @@ export type NewExperiment = {
   deckLayoutId: string;
 };
 
-export type Experiment = {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  ownerId: string;
-} & NewExperiment;
+export type NAATExperiment = {
+  type: 'NAAT';
+} & Experiment &
+  NewNAATExperiment;
 
 export interface Reagent {
   id: string;
@@ -83,11 +63,11 @@ export interface ExperimentMastermix {
   mastermixes: Mastermix[];
 }
 
-export type ExperimentWithMastermix = Experiment & {
+export type ExperimentWithMastermix = NAATExperiment & {
   mastermixes: Mastermix[];
 };
 
-export const getExperiments = async (filters: ExperimentFilters = {}) => {
+export const getNAATExperiments = async (filters: ExperimentFilters = {}) => {
   const params = new URLSearchParams();
 
   if (filters.page) params.append('page', filters.page.toString());
@@ -95,35 +75,41 @@ export const getExperiments = async (filters: ExperimentFilters = {}) => {
   if (filters.sortBy) params.append('sortBy', filters.sortBy);
   if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
   if (filters.search) params.append('search', filters.search);
-  if (filters.status) params.append('status', filters.status);
 
-  const response = await axios.get<PaginatedResponse<Experiment>>('/experiments', { params });
-  return response.data;
+  params.append('type', 'NAAT');
+
+  const response = await axios.get<PaginatedResponse<NAATExperiment>>('/experiments', { params });
+  return {
+    ...response.data,
+    data: response.data.data.map((experiment) => {
+      return { ...experiment, type: 'NAAT' };
+    }),
+  };
 };
 
-export const getExperiment = (id: string) =>
-  axios.get<ExperimentWithMastermix>(`/experiments/${id}`).then((res) => res.data);
+export const getNAATExperiment = (id: string) =>
+  axios.get<ExperimentWithMastermix>(`/experiments/naat/${id}`).then((res) => res.data);
 
-export const createExperiment = (data: NewExperiment) =>
-  axios.post<Experiment>('/experiments', data).then((res) => res.data);
+export const createNAATExperiment = (data: NewNAATExperiment) =>
+  axios.post<NAATExperiment>('/experiments/naat', data).then((res) => res.data);
 
-export const updateExperiment = (id: string, data: Partial<Experiment>) =>
-  axios.put<Experiment>(`/experiments/${id}`, data).then((res) => res.data);
+export const updateNAATExperiment = (id: string, data: Partial<NAATExperiment>) =>
+  axios.put<NAATExperiment>(`/experiments/naat/${id}`, data).then((res) => res.data);
 
-export const deleteExperiment = (id: string) =>
-  axios.delete(`/experiments/${id}`).then((res) => res.data);
+export const deleteNAATExperiment = (id: string) =>
+  axios.delete(`/experiments/naat/${id}`).then((res) => res.data);
 
 export const getMastermix = (experimentId: string) =>
   axios
-    .get<ExperimentMastermix>(`/experiments/${experimentId}/mastermix`)
+    .get<ExperimentMastermix>(`/experiments/naat/${experimentId}/mastermix`)
     .then((res) => res.data.mastermixes || []);
 
 export const updateMastermix = (data: ExperimentMastermix) =>
   axios
-    .put<ExperimentMastermix>(`/experiments/${data.experimentId}/mastermix`, data)
+    .put<ExperimentMastermix>(`/experiments/naat/${data.experimentId}/mastermix`, data)
     .then((res) => res.data);
 
-export const cloneExperiment = async (experimentId: string) => {
-  const response = await axios.post<Experiment>(`/experiments/${experimentId}/clone`);
+export const cloneNAATExperiment = async (experimentId: string) => {
+  const response = await axios.post<NAATExperiment>(`/experiments/naat/${experimentId}/clone`);
   return response.data;
 };
