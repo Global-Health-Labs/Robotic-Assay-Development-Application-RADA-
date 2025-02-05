@@ -30,7 +30,7 @@ export const SolutionsTable: FC<Props> = ({
   onPlateWellChange,
 }) => {
   const [instructionData, setInstructionData] = useState<LFARoboInstruction[]>([]);
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ['instructionData', experiment.id],
     queryFn: () => getLFAInstructionData(experiment.id),
     enabled: !!experiment,

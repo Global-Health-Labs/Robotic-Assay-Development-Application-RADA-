@@ -1,12 +1,9 @@
-import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
+import { LFAExperimentWithPlateConfig, LFARoboInstruction } from '@/api/lfa-experiments.api';
+import { last, trim } from 'lodash-es';
 import { FC, useState } from 'react';
-import { DeckLayout } from './DeckLayout';
 import { InstructionDetails } from './InstructionDetails';
 import { PlateLayout } from './PlateLayout';
 import { SolutionsTable } from './SolutionsTable';
-import { SelectedExperimentalPlanRow, NAATRowSelectedState } from './types';
-import { LFAExperimentWithPlateConfig, LFARoboInstruction } from '@/api/lfa-experiments.api';
-import { last, trim } from 'lodash-es';
 
 interface Props {
   experiment: LFAExperimentWithPlateConfig;
@@ -47,7 +44,7 @@ const LFAInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
             />
             <InstructionDetails selectedState={selectedState} cellPosition={selectedCellPosition} />
           </div>
-          <DeckLayout selectedPlate={selectedState.plate} />
+          {/* <DeckLayout selectedPlate={selectedState.plate} /> */}
         </div>
       </div>
     </div>

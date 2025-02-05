@@ -1,8 +1,3 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { resetPasswordRequest } from '@/api/auth.api';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,10 +9,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import * as z from 'zod';
 import RADALogoInverted from '@/components/ui/RADALogoInverted';
-import { AxiosError } from 'axios';
-import { Link } from 'react-router-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import * as z from 'zod';
 
 interface PasswordFormInputs {
   newPassword: string;

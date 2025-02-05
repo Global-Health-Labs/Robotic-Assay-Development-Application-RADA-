@@ -11,6 +11,7 @@ import {
   getSortedRowModel,
   useReactTable,
   PaginationState,
+  OnChangeFn,
 } from '@tanstack/react-table';
 import * as React from 'react';
 
@@ -33,8 +34,8 @@ interface DataTableProps<TData, TValue> {
     sorting?: SortingState;
     pagination?: PaginationState;
   };
-  onSortingChange?: (sorting: SortingState) => void;
-  onPaginationChange?: (pagination: PaginationState) => void;
+  onSortingChange?: OnChangeFn<SortingState>;
+  onPaginationChange?: OnChangeFn<PaginationState>;
   manualPagination?: boolean;
   manualSorting?: boolean;
   rowCount?: number;

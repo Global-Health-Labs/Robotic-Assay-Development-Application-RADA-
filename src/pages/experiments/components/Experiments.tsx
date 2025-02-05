@@ -1,6 +1,6 @@
 import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
-import { getLFAExperiments, LFAExperiment } from '@/api/lfa-experiments.api';
-import { getNAATExperiments, NAATExperiment } from '@/api/naat-experiments.api';
+import { getLFAExperiments } from '@/api/lfa-experiments.api';
+import { getNAATExperiments } from '@/api/naat-experiments.api';
 import { DataTable } from '@/components/data-table/data-table';
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header';
 import { useTableState } from '@/components/data-table/table-state';

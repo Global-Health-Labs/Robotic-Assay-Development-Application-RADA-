@@ -43,10 +43,12 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({ open, onClose, onUpl
             maxFileSize={10 * 1024 * 1024} // 10MB
             accept={['.pdf', '.txt', '.doc', '.docx', '.png', '.jpg', '.jpeg']}
             onChange={handleFileChange}
-            onRemove={(index) => {
-              setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+            onRemove={(file) => {
+              setSelectedFiles((prev) => prev.filter((f) => f !== file));
             }}
-          />
+          >
+            <div>User message here</div>
+          </MultiFileUploader>
         </div>
 
         <div className="flex justify-end gap-3">

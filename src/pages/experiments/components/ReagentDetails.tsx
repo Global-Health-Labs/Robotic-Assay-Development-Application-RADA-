@@ -133,117 +133,119 @@ export function ReagentDetails({
   }, [form, onValidationChange, onUpdate]);
 
   return (
-    <Form {...form} className="grid grid-cols-[2fr,1fr,1fr,1fr,1fr,auto] items-center gap-2">
-      <FormField
-        control={form.control}
-        name="source"
-        render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <Input {...field} placeholder="" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="unit"
-        render={({ field }) => (
-          <FormItem>
-            <Select value={field.value} onValueChange={field.onChange}>
+    <Form {...form}>
+      <div className="grid grid-cols-[2fr,1fr,1fr,1fr,1fr,auto] items-center gap-2">
+        <FormField
+          control={form.control}
+          name="source"
+          render={({ field }) => (
+            <FormItem>
               <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Unit" />
-                </SelectTrigger>
+                <Input {...field} placeholder="" />
               </FormControl>
-              <SelectContent>
-                {(volumeUnits || []).map(({ unit }) => (
-                  <SelectItem key={unit} value={unit}>
-                    {unit}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="finalConcentration"
-        render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <Input {...field} placeholder="" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+        <FormField
+          control={form.control}
+          name="unit"
+          render={({ field }) => (
+            <FormItem>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Unit" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(volumeUnits || []).map(({ unit }) => (
+                    <SelectItem key={unit} value={unit}>
+                      {unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <FormField
-        control={form.control}
-        name="stockConcentration"
-        render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <Input {...field} placeholder="" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="liquidType"
-        render={({ field }) => (
-          <FormItem>
-            <Select value={field.value} onValueChange={field.onChange}>
+        <FormField
+          control={form.control}
+          name="finalConcentration"
+          render={({ field }) => (
+            <FormItem>
               <FormControl>
-                <SelectTrigger className="text-left">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
+                <Input {...field} placeholder="" />
               </FormControl>
-              <SelectContent>
-                {(liquidTypes || []).map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <div className="flex gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onClone}
-          className="bg-transparent text-muted-foreground"
-          title="Copy reagent"
-        >
-          <CopyPlus className="h-4 w-4" />
-        </Button>
+        <FormField
+          control={form.control}
+          name="stockConcentration"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input {...field} placeholder="" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onDelete}
-          className={cn('bg-transparent', !canDelete && 'pointer-events-none opacity-60')}
-          title="Delete reagent"
-          disabled={!canDelete}
-        >
-          <Trash2Icon className="h-4 w-4 text-secondary" />
-        </Button>
+        <FormField
+          control={form.control}
+          name="liquidType"
+          render={({ field }) => (
+            <FormItem>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="text-left">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(liquidTypes || []).map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onClone}
+            className="bg-transparent text-muted-foreground"
+            title="Copy reagent"
+          >
+            <CopyPlus className="h-4 w-4" />
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            className={cn('bg-transparent', !canDelete && 'pointer-events-none opacity-60')}
+            title="Delete reagent"
+            disabled={!canDelete}
+          >
+            <Trash2Icon className="h-4 w-4 text-secondary" />
+          </Button>
+        </div>
       </div>
     </Form>
   );

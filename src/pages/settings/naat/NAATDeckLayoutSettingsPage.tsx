@@ -17,7 +17,45 @@ import { toast } from 'sonner';
 interface PlateItem {
   id: keyof typeof PLATE_LAYOUT_NAME;
   name: string;
+  isEmpty?: boolean;
+  wellCount: WellCount;
+  plateDescriptor: PlateDescriptor;
+  sequenceNumber: string;
 }
+
+type WellCount = 1 | 96 | 384;
+type PlateDescriptor = 'PCR' | 'Flat' | 'DW' | 'V';
+
+const WELL_COUNT_OPTIONS: WellCount[] = [1, 96, 384];
+const PLATE_DESCRIPTOR_OPTIONS: PlateDescriptor[] = ['PCR', 'Flat', 'DW', 'V'];
+
+function generateSequenceNumber(count: number): string {
+  return count.toString().padStart(4, '0');
+}
+
+function generatePlateName(
+  wellCount: WellCount,
+  plateDescriptor: PlateDescriptor,
+  sequenceNumber: string
+): string {
+  return `${wellCount}_${plateDescriptor}_${sequenceNumber}`;
+}
+
+const defaultPlates: PlateItem[] = Array.from({ length: 15 }, (_, index) => {
+  // For demo purposes, assign some default values
+  const wellCount: WellCount = 96;
+  const plateDescriptor: PlateDescriptor = 'Flat';
+  const sequenceNumber = generateSequenceNumber(index + 1);
+
+  return {
+    id: `PLATE_${index}` as keyof typeof PLATE_LAYOUT_NAME,
+    name: generatePlateName(wellCount, plateDescriptor, sequenceNumber),
+    wellCount,
+    plateDescriptor,
+    sequenceNumber,
+    isEmpty: false,
+  };
+});
 
 interface DeckLayout {
   id: string;
@@ -31,25 +69,15 @@ interface DeckLayout {
   };
 }
 
-const defaultPlates: PlateItem[] = [
-  { id: 'IVL_96_FLAT_01', name: '96 Flat 01' },
-  { id: 'IVL_96_FLAT_02', name: '96 Flat 02' },
-  { id: 'IVL_96_DW_01', name: '96 DW 01' },
-  { id: 'IVL_96_DW_02', name: '96 DW 02' },
-  { id: 'IVL_96_FLAT_03', name: '96 Flat 03' },
-  { id: 'PCR_COOLER_01', name: 'PCR Cooler 01' },
-  { id: 'PCR_COOLER_02', name: 'PCR Cooler 02' },
-  { id: 'PCR_COOLER_03', name: 'PCR Cooler 03' },
-  { id: 'IVL_384_FLAT_01', name: '384 Flat 01' },
-  { id: 'IVL_384_FLAT_02', name: '384 Flat 02' },
-  { id: 'IVL_96_TEMPLATE_01', name: '96 Template 01' },
-  { id: 'PCR_COOLER_04', name: 'PCR Cooler 04' },
-  { id: 'PCR_COOLER_05', name: 'PCR Cooler 05' },
-  { id: 'PCR_COOLER_06', name: 'PCR Cooler 06' },
-  { id: 'PCR_COOLER_07', name: 'PCR Cooler 07' },
-];
-
-function SortablePlate({ plate }: { plate: PlateItem }) {
+function SortablePlate({
+  plate,
+  onSetEmpty,
+  onUpdatePlate,
+}: {
+  plate: PlateItem;
+  onSetEmpty: (id: string, isEmpty: boolean) => void;
+  onUpdatePlate: (id: string, updates: Partial<PlateItem>) => void;
+}) {
   const { attributes, isDragging, listeners, node, setNodeRef, transform, transition } =
     useSortable({
       id: plate.id,
@@ -78,13 +106,57 @@ function SortablePlate({ plate }: { plate: PlateItem }) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
       className={cn(
-        'transition-[colors, shadow] cursor-move rounded-lg border bg-white p-4 shadow-sm ease-in-out hover:shadow-md'
+        'transition-[colors, shadow] rounded-lg border bg-white p-4 shadow-sm ease-in-out hover:shadow-md'
       )}
     >
-      {plate.name}
-      <div className="mt-1 text-xs">{PLATE_LAYOUT_NAME[plate.id]}</div>
+      <div {...listeners} className="cursor-move">
+        {plate.isEmpty ? 'EMPTY' : plate.name}
+      </div>
+      <div className="mt-2 space-y-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2">
+          <select
+            value={plate.wellCount}
+            onChange={(e) =>
+              onUpdatePlate(plate.id, { wellCount: Number(e.target.value) as WellCount })
+            }
+            className="rounded border p-1 text-xs"
+            disabled={plate.isEmpty}
+          >
+            {WELL_COUNT_OPTIONS.map((count) => (
+              <option key={count} value={count}>
+                {count} Wells
+              </option>
+            ))}
+          </select>
+          <select
+            value={plate.plateDescriptor}
+            onChange={(e) =>
+              onUpdatePlate(plate.id, { plateDescriptor: e.target.value as PlateDescriptor })
+            }
+            className="rounded border p-1 text-xs"
+            disabled={plate.isEmpty}
+          >
+            {PLATE_DESCRIPTOR_OPTIONS.map((descriptor) => (
+              <option key={descriptor} value={descriptor}>
+                {descriptor}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id={`empty-${plate.id}`}
+            checked={plate.isEmpty}
+            onChange={(e) => onSetEmpty(plate.id, e.target.checked)}
+            className="h-4 w-4"
+          />
+          <label htmlFor={`empty-${plate.id}`} className="text-xs">
+            Set Empty
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
@@ -131,17 +203,55 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
     },
   });
 
-  function handleDragEnd(event: DragEndEvent) {
+  const updateSequenceNumbers = (updatedPlates: PlateItem[]) => {
+    const counters = new Map<string, number>();
+
+    return updatedPlates.map((plate) => {
+      if (plate.isEmpty) return plate;
+
+      const key = `${plate.wellCount}_${plate.plateDescriptor}`;
+      const count = (counters.get(key) || 0) + 1;
+      counters.set(key, count);
+
+      const sequenceNumber = generateSequenceNumber(count);
+      return {
+        ...plate,
+        sequenceNumber,
+        name: generatePlateName(plate.wellCount, plate.plateDescriptor, sequenceNumber),
+      };
+    });
+  };
+
+  const handleSetEmpty = (id: string, isEmpty: boolean) => {
+    setPlates((prevPlates) => {
+      const updatedPlates = prevPlates.map((plate) =>
+        plate.id === id ? { ...plate, isEmpty } : plate
+      );
+      return updateSequenceNumbers(updatedPlates);
+    });
+  };
+
+  const handleUpdatePlate = (id: string, updates: Partial<PlateItem>) => {
+    setPlates((prevPlates) => {
+      const updatedPlates = prevPlates.map((plate) =>
+        plate.id === id ? { ...plate, ...updates } : plate
+      );
+      return updateSequenceNumbers(updatedPlates);
+    });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       setPlates((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const reorderedPlates = arrayMove(items, oldIndex, newIndex);
+        return updateSequenceNumbers(reorderedPlates);
       });
     }
-  }
+  };
 
   const handleSave = () => {
     if (!name) {
@@ -193,7 +303,12 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
           <div className="grid grid-cols-3 gap-4">
             <SortableContext items={plates}>
               {plates.map((plate) => (
-                <SortablePlate key={plate.id} plate={plate} />
+                <SortablePlate
+                  key={plate.id}
+                  plate={plate}
+                  onSetEmpty={handleSetEmpty}
+                  onUpdatePlate={handleUpdatePlate}
+                />
               ))}
             </SortableContext>
           </div>
@@ -219,7 +334,7 @@ const DeckLayoutSettingsPage: React.FC = () => {
   const [selectedLayout, setSelectedLayout] = useState<DeckLayout | undefined>();
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  const { data: layouts, isLoading } = useQuery({
+  const { data: layouts } = useQuery({
     queryKey: ['deck-layouts'],
     queryFn: async () => {
       const response = await axios.get('/settings/naat/deck-layouts');

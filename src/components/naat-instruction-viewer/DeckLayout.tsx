@@ -1,4 +1,3 @@
-import { DeckLayout as DeckLayoutType } from '@/api/naat-experiments.api';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { FC } from 'react';

@@ -1,7 +1,6 @@
 import {
   createLFAExperiment,
   getLFAExperimentQueryKey,
-  LFA_EXPERIMENT_QUERY_KEY,
   LFAExperiment,
   NewLFAExperiment,
   updateLFAExperiment,

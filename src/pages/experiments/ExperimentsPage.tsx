@@ -1,11 +1,10 @@
-import { ExperimentFilters } from '@/api/experiment.type';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Experiments from '@/pages/experiments/components/Experiments';
 import { Link } from 'react-router-dom';
 
 export default function ExperimentsPage() {
-  const handleTabChange = (value: string) => {
+  const handleTabChange = () => {
     // setPagination({ pageIndex: 0, pageSize: pagination.pageSize });
     // setFilters((prev: ExperimentFilters) => ({ ...prev }));
   };

@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 import * as LabelPrimitive from '@radix-ui/react-label';
 import { Slot } from '@radix-ui/react-slot';
@@ -9,8 +11,9 @@ import {
   FormProvider,
   useFormContext,
 } from 'react-hook-form';
-import { Label } from './label';
+
 import { cn } from '@/lib/utils';
+import { Label } from './label';
 
 const Form = FormProvider;
 
@@ -29,9 +32,8 @@ const FormField = <
 >({
   ...props
 }: ControllerProps<TFieldValues, TName>) => {
-  const { name } = props;
   return (
-    <FormFieldContext.Provider value={{ name }}>
+    <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
     </FormFieldContext.Provider>
   );
@@ -39,6 +41,7 @@ const FormField = <
 
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext);
+  const itemContext = React.useContext(FormItemContext);
   const { getFieldState, formState } = useFormContext();
 
   const fieldState = getFieldState(fieldContext.name, formState);
@@ -47,7 +50,7 @@ const useFormField = () => {
     throw new Error('useFormField should be used within <FormField>');
   }
 
-  const { id } = fieldContext;
+  const { id } = itemContext;
 
   return {
     id,
@@ -59,9 +62,21 @@ const useFormField = () => {
   };
 };
 
+type FormItemContextValue = {
+  id: string;
+};
+
+const FormItemContext = React.createContext<FormItemContextValue>({} as FormItemContextValue);
+
 const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
-    return <div ref={ref} className={cn('space-y-2', className)} {...props} />;
+    const id = React.useId();
+
+    return (
+      <FormItemContext.Provider value={{ id }}>
+        <div ref={ref} className={cn('space-y-2', className)} {...props} />
+      </FormItemContext.Provider>
+    );
   }
 );
 FormItem.displayName = 'FormItem';
@@ -133,7 +148,7 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
-      className={cn('text-xs font-medium text-destructive', className)}
+      className={cn('text-sm font-medium text-destructive', className)}
       {...props}
     >
       {body}
