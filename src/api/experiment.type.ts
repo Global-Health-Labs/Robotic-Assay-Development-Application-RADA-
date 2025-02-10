@@ -4,6 +4,7 @@ export type Experiment = {
   updatedAt: string;
   ownerId: string;
   ownerFullName: string;
+  name: string;
   type: 'LFA' | 'NAAT';
 };
 

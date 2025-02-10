@@ -38,7 +38,7 @@ const LFAInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
   });
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-4">
       <div className="flex gap-4">
         <div className="w-1/3">
           <SolutionsTable
@@ -58,12 +58,9 @@ const LFAInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
             />
             <InstructionDetails selectedState={selectedState} cellPosition={selectedCellPosition} />
           </div>
-          <LFADeckLayout
-            deckLayout={experiment.deckLayout}
-            selectedPlate={selectedPlate as string}
-          />
         </div>
       </div>
+      <LFADeckLayout deckLayout={experiment.deckLayout} selectedPlate={selectedPlate as string} />
     </div>
   );
 };

@@ -8,23 +8,35 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MultiFileUploader } from './multi-file-uploader';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface UploadDialogProps {
   open: boolean;
   onClose: () => void;
-  onUpload: (files: File[]) => void;
+  onUpload: (files: File[]) => Promise<void>;
 }
 
 export const UploadDialog: React.FC<UploadDialogProps> = ({ open, onClose, onUpload }) => {
   const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
+  const [isUploading, setIsUploading] = React.useState(false);
 
   const handleFileChange = (files: File[]) => {
     setSelectedFiles(files);
   };
 
-  const handleUpload = () => {
-    onUpload(selectedFiles);
-    onClose();
+  const handleUpload = async () => {
+    try {
+      setIsUploading(true);
+      await onUpload(selectedFiles);
+      onClose();
+      toast.success('Files uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload files');
+      console.error('Upload error:', error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -41,7 +53,7 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({ open, onClose, onUpl
           <MultiFileUploader
             maxNumFiles={10}
             maxFileSize={10 * 1024 * 1024} // 10MB
-            accept={['.pdf', '.txt', '.doc', '.docx', '.png', '.jpg', '.jpeg']}
+            accept={['pdf', 'txt', 'doc', 'docx', 'png', 'jpg', 'jpeg']}
             onChange={handleFileChange}
             onRemove={(file) => {
               setSelectedFiles((prev) => prev.filter((f) => f !== file));
@@ -52,11 +64,18 @@ export const UploadDialog: React.FC<UploadDialogProps> = ({ open, onClose, onUpl
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isUploading}>
             Cancel
           </Button>
-          <Button onClick={handleUpload} disabled={selectedFiles.length === 0}>
-            Upload
+          <Button onClick={handleUpload} disabled={selectedFiles.length === 0 || isUploading}>
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              'Upload'
+            )}
           </Button>
         </div>
       </DialogContent>

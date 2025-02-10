@@ -9,6 +9,7 @@ import { PageLoading } from '@/components/ui/page-loading';
 import ExperimentActions from '@/pages/experiments/components/ExperimentActions';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 interface ExperimentsProps {
@@ -20,6 +21,17 @@ export const columns: ColumnDef<Experiment>[] = [
     accessorKey: 'name',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Name" />,
     enableSorting: true,
+    cell: ({ row }) => {
+      const experiment = row.original;
+      return (
+        <Link
+          to={`/experiments/${experiment.type.toLowerCase()}/${experiment.id}`}
+          className="text-blue-600 hover:text-blue-800 hover:underline"
+        >
+          {experiment.name}
+        </Link>
+      );
+    },
   },
   {
     accessorKey: 'updatedAt',

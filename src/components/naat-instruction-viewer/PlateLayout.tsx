@@ -93,7 +93,7 @@ export const PlateLayout: FC<Props> = ({ plateWellCount, selectedWellId, onCellP
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="py-4">
         <CardTitle className="text-lg">Plate Layout</CardTitle>
       </CardHeader>
       <CardContent className="relative">

@@ -34,14 +34,14 @@ export const NAATDeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {
   };
 
   return (
-    <Card className="p-4">
+    <Card className="max-w-6xl p-4">
       <div className="space-y-4">
-        <div className="text-sm font-medium">Deck Layout</div>
+        <div className="text-lg font-semibold">Deck Layout</div>
         <div className="relative grid grid-cols-6 gap-6">
           {/* Tip Locations */}
-          <div className="col-span-1">
+          <div className="col-span-1 flex flex-col">
             <div className="mb-2 text-center text-sm font-semibold">Tip Locations</div>
-            <div className="h-[400px] rounded border-2 border-black bg-white" />
+            <div className="flex-1 rounded border-2 border-black bg-white" />
           </div>
 
           {/* Plate Grid Section */}
@@ -57,20 +57,26 @@ export const NAATDeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {
             </div>
           </div>
 
-          {/* Plate Sealer */}
-          <div className="col-span-1 flex h-full flex-col">
-            <div className="mb-2 text-center text-sm font-semibold">Plate Sealer</div>
-            <div className="flex-1 rounded border-2 border-black bg-white" />
-          </div>
+          <div className="col-span-2 grid h-full grid-cols-4 gap-6">
+            {/* Plate Sealer */}
+            <div className="col-span-3 flex h-full flex-col">
+              <div className="mb-2 text-center text-sm font-semibold">Plate Sealer</div>
+              <div className="flex-1 rounded border-2 border-black bg-white" />
+            </div>
 
-          {/* Waste */}
-          <div className="col-span-1">
-            <div className="mb-2 text-center text-sm font-semibold">Waste</div>
-            <div className="mt-[50%] h-1/2 rounded border-2 border-black bg-white" />
+            {/* Waste */}
+            <div className="col-span-1 flex h-full flex-col">
+              <div className="mb-2 text-center text-sm font-semibold">Waste</div>
+              <div className="flex flex-1 items-center">
+                <div className="my-auto h-1/2 w-full rounded border-2 border-black bg-white" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="text-sm font-medium text-muted-foreground">Front of Machine</div>
+        <div className="w-full text-center text-sm font-medium text-muted-foreground">
+          Front of Machine
+        </div>
       </div>
     </Card>
   );

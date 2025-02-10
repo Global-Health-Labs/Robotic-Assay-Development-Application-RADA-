@@ -214,7 +214,7 @@ export function MastermixDetails({
         <div className="w-8" /> {/* Actions column */}
         {/* Reagents */}
         {mastermix.reagents.map((reagent) => (
-          <div key={reagent.id} className="col-span-full grid grid-cols-subgrid gap-2 pb-2">
+          <div key={reagent.id} className="col-span-full pb-2">
             <ReagentDetails
               reagent={reagent}
               canDelete={mastermix.reagents.length > 1}

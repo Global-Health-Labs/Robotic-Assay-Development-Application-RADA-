@@ -93,11 +93,10 @@ export default function MastermixPage() {
   };
 
   const handleCancel = () => {
-    if (isDirty) {
-      // Reset to server state
-      setLocalMastermixes(mastermixData || []);
-      setIsDirty(false);
-    }
+    // Reset to server state
+    setLocalMastermixes(mastermixData || []);
+    setIsDirty(false);
+    navigate(`/experiments`);
   };
 
   const addMastermix = () => {
@@ -145,7 +144,7 @@ export default function MastermixPage() {
         />
 
         <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={handleCancel} disabled={!isDirty}>
+          <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
           <Button

@@ -19,7 +19,7 @@ export default function LFARoboInstructionViewerPage() {
 
   if (!id) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="py-6">
         <h1 className="mb-6 text-2xl font-bold">Robot Instructions Viewer</h1>
         <h3 className="text-lg font-semibold">Experiment not found</h3>
         <p className="text-gray-600">Please select a valid experiment.</p>
@@ -29,7 +29,7 @@ export default function LFARoboInstructionViewerPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto flex flex-col items-center py-6">
+      <div className="flex flex-col items-center py-6">
         <h1 className="mb-6 text-2xl font-bold">Robot Instructions Viewer</h1>
         <CircularProgress />
       </div>

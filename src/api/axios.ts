@@ -8,7 +8,7 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (!config.url?.endsWith('/auth/login')) {
+  if (!config.url?.endsWith('/auth/login') && config.withCredentials !== false) {
     const token = localStorage.getItem('token');
     config.headers['Authorization'] = 'Bearer ' + token;
   }

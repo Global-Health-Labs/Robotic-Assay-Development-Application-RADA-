@@ -37,7 +37,7 @@ const NAATInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
   const selectedPlateName = plateIdToName(selectedState.plate);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-4">
       <div className="flex gap-4">
         <div className="w-1/3">
           <SolutionsTable
@@ -57,9 +57,9 @@ const NAATInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
             />
             <InstructionDetails selectedState={selectedState} cellPosition={selectedCellPosition} />
           </div>
-          <NAATDeckLayout deckLayout={experiment.deckLayout} selectedPlate={selectedPlateName} />
         </div>
       </div>
+      <NAATDeckLayout deckLayout={experiment.deckLayout} selectedPlate={selectedPlateName} />
     </div>
   );
 };

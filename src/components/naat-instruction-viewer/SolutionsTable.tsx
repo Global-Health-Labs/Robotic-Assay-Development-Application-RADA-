@@ -70,7 +70,7 @@ export const SolutionsTable: FC<Props> = ({
   };
 
   return (
-    <div className="mb-5 ml-3 overflow-hidden rounded-md border">
+    <div className="mb-5 overflow-hidden rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>

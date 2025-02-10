@@ -1,6 +1,7 @@
 import { Experiment } from '@/api/experiment.type';
 import { cloneNAATExperiment } from '@/api/naat-experiments.api';
 import { cloneLFAExperiment } from '@/api/lfa-experiments.api';
+import { uploadExperimentFiles } from '@/api/experiment-files.api';
 import { UploadDialog } from '@/components/file-uploader/upload-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +13,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Copy, Edit2, FileText, Grid3x3, MoreHorizontal, Upload } from 'lucide-react';
+import { Copy, Edit2, FileText, Grid3x3, MoreHorizontal, MoreVertical, Upload } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -45,12 +46,24 @@ export default function ExperimentActions({ experiment }: Props) {
     },
   });
 
+  const uploadFilesMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      return uploadExperimentFiles(experiment.id, experiment.type, files);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['experiment-files', experiment.id] });
+    },
+    onError: (error) => {
+      console.error('Upload error:', error);
+    },
+  });
+
   const handleClone = () => {
     cloneExperimentMutation.mutate();
   };
 
-  const handleFileUpload = () => {
-    setUploadDialogOpen(false);
+  const handleFileUpload = async (files: File[]) => {
+    await uploadFilesMutation.mutateAsync(files);
   };
 
   return (
@@ -59,7 +72,7 @@ export default function ExperimentActions({ experiment }: Props) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
             <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
