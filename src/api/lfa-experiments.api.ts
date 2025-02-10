@@ -1,7 +1,7 @@
-import { AssayPlateConfig, DeckLayout } from '@/types/lfa.types';
-import axios from './axios';
-import { useQuery } from '@tanstack/react-query';
 import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
+import { DeckLayout } from '@/types/lfa.types';
+import { useQuery } from '@tanstack/react-query';
+import axios from './axios';
 
 export interface LFAStep {
   step: string;

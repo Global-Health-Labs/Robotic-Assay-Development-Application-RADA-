@@ -1,9 +1,11 @@
-import { NAATExperiment } from '@/api/naat-experiments.api';
+import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dayjs from 'dayjs';
 import { ExperimentFiles } from './ExperimentFiles';
 
-const NAATExperimentSummary: React.FC<{ experiment: NAATExperiment }> = ({ experiment }) => {
+const NAATExperimentSummary: React.FC<{ experiment: ExperimentWithMastermix }> = ({
+  experiment,
+}) => {
   return (
     <div className="space-y-6">
       <Card>

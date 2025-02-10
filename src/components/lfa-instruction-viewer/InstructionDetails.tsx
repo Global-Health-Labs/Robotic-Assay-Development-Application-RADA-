@@ -3,7 +3,7 @@ import { plateIdToName } from '@/components/lfa-instruction-viewer/plate.util';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { arrow, autoUpdate, flip, offset, shift, Strategy, useFloating } from '@floating-ui/react';
-import { first, last } from 'lodash-es';
+import { last } from 'lodash-es';
 import { FC, useEffect, useRef } from 'react';
 
 interface Props {

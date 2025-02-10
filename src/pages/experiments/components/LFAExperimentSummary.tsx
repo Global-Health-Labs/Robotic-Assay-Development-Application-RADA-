@@ -2,7 +2,6 @@ import { LFAExperimentWithDeckLayout } from '@/api/lfa-experiments.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dayjs from 'dayjs';
 import { ExperimentFiles } from './ExperimentFiles';
-import { LiquidType } from '../../../hooks/useLiquidTypes';
 
 const LFAExperimentSummary: React.FC<{ experiment: LFAExperimentWithDeckLayout }> = ({
   experiment,

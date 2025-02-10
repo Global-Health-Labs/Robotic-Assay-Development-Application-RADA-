@@ -1,11 +1,11 @@
 import { LFAExperimentWithDeckLayout, LFARoboInstruction } from '@/api/lfa-experiments.api';
-import { last, size, trim } from 'lodash-es';
+import { LFADeckLayout } from '@/components/lfa-instruction-viewer/DeckLayout';
+import { plateIdToName } from '@/components/lfa-instruction-viewer/plate.util';
+import { size, trim } from 'lodash-es';
 import { FC, useState } from 'react';
 import { InstructionDetails } from './InstructionDetails';
 import { PlateLayout } from './PlateLayout';
 import { SolutionsTable } from './SolutionsTable';
-import { LFADeckLayout } from '@/components/lfa-instruction-viewer/DeckLayout';
-import { plateIdToName } from '@/components/lfa-instruction-viewer/plate.util';
 
 interface Props {
   experiment: LFAExperimentWithDeckLayout;

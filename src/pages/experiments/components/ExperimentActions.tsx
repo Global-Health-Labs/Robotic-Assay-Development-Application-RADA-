@@ -1,7 +1,7 @@
-import { Experiment } from '@/api/experiment.type';
-import { cloneNAATExperiment } from '@/api/naat-experiments.api';
-import { cloneLFAExperiment } from '@/api/lfa-experiments.api';
 import { uploadExperimentFiles } from '@/api/experiment-files.api';
+import { Experiment } from '@/api/experiment.type';
+import { cloneLFAExperiment } from '@/api/lfa-experiments.api';
+import { cloneNAATExperiment } from '@/api/naat-experiments.api';
 import { UploadDialog } from '@/components/file-uploader/upload-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,14 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Copy, Edit2, FileText, Grid3x3, MoreHorizontal, MoreVertical, Upload } from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Copy, Edit2, FileText, Grid3x3, MoreVertical, Upload } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface Props {
   experiment: Experiment;
