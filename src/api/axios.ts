@@ -7,6 +7,8 @@ const instance = axios.create({
   withCredentials: true,
 });
 
+console.log('API Bae URL', import.meta.env.VITE_BACKEND_URL);
+
 instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (!config.url?.endsWith('/auth/login') && config.withCredentials !== false) {
     const token = localStorage.getItem('token');
