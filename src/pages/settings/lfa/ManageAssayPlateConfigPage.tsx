@@ -122,25 +122,52 @@ export default function AssayPlateConfigList() {
                 Edit
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-              <div>
-                <span className="font-medium">Plate Prefix</span>
-                <div>{config.assayPlatePrefix}</div>
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-muted-foreground">Plate Prefix</span>
+                  <div>{config.assayPlatePrefix}</div>
+                </div>
+                <div>
+                  <span className="font-medium text-muted-foreground">Device Type</span>
+                  <div>{config.deviceType}</div>
+                </div>
               </div>
               <div>
-                <span className="font-medium">Plates</span>
-                <div>{config.numPlates}</div>
+                <h3 className="text-base font-medium">Plate Details</h3>
+                <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-muted-foreground">Plates</span>
+                    <div>{config.numPlates}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Rows</span>
+                    <div>{config.numRows}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Columns</span>
+                    <div>{config.numColumns}</div>
+                  </div>
+                </div>
+
+                <div className="mt-2 grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      Max. {config.deviceType}s per Plate
+                    </span>
+                    <div>{config.numRows * config.numColumns}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">
+                      Max. {config.deviceType}s per Deck
+                    </span>
+                    <div>{config.numPlates * config.numRows * config.numColumns}</div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="font-medium">Strips</span>
-                <div>{config.numStrips}</div>
-              </div>
-              <div>
-                <span className="font-medium">Columns</span>
-                <div>{config.numColumns}</div>
-              </div>
+
+              <LocationsTable locations={config.locations} />
             </div>
-            <LocationsTable locations={config.locations} />
           </div>
         ))}
       </div>

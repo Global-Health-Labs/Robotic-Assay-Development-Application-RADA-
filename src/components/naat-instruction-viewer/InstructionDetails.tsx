@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { FC, useRef, useEffect } from 'react';
 import { SelectedState } from './types';
 import { useFloating, offset, flip, shift, arrow, autoUpdate, Strategy } from '@floating-ui/react';
+import { plateIdToName } from '@/components/naat-instruction-viewer/plate.util';
 
 interface Props {
   selectedState: SelectedState;
@@ -61,9 +62,8 @@ export const InstructionDetails: FC<Props> = ({ selectedState, cellPosition, cla
     return (
       <p className="text-sm leading-7">
         Load {highlightText(`${selectedState.volume} uL`)} of reagent{' '}
-        {highlightText(selectedState.solution)} into well{' '}
-        <span className="font-bold italic text-primary">{selectedState.wellLabel}</span> in plate at
-        location {highlightText(selectedState.plate)} on the deck
+        {highlightText(selectedState.solution)} into well {highlightText(selectedState.wellLabel)}{' '}
+        in plate at location {highlightText(plateIdToName(selectedState.plate))} on the deck
       </p>
     );
   };

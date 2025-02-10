@@ -1,4 +1,5 @@
 import { LFARoboInstruction } from '@/api/lfa-experiments.api';
+import { plateIdToName } from '@/components/lfa-instruction-viewer/plate.util';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { arrow, autoUpdate, flip, offset, shift, Strategy, useFloating } from '@floating-ui/react';
@@ -51,7 +52,7 @@ export const InstructionDetails: FC<Props> = ({ selectedState, cellPosition, cla
   );
 
   const volume = Number(selectedState.userInput);
-  const plateWell = first(selectedState.plateWell.split('|'));
+  const plateWell = plateIdToName(selectedState.plateWell.split('|')[0]);
   const batteryLocation = last(selectedState.plateWell.split('|')) || '';
 
   const renderInstruction = () => {
@@ -66,8 +67,8 @@ export const InstructionDetails: FC<Props> = ({ selectedState, cellPosition, cla
     return (
       <p className="text-sm leading-7">
         Load {highlightText(`${volume} uL`)} of reagent {highlightText(selectedState.solution)} into
-        well <span className="font-bold italic text-primary">{plateWell}</span> in plate at location{' '}
-        {highlightText(batteryLocation)} on the deck
+        well {highlightText(plateWell)} in plate at location {highlightText(batteryLocation)} on the
+        deck
       </p>
     );
   };

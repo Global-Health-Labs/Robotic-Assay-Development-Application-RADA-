@@ -1,39 +1,76 @@
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { DeckLayout } from '@/types/lfa.types';
 import { FC } from 'react';
-import { PLATE_LAYOUT_NAME } from './types';
 
 interface Props {
   selectedPlate: string;
-  deckLayoutId?: string;
+  deckLayout: DeckLayout;
 }
 
-export const DeckLayout: FC<Props> = ({ selectedPlate, deckLayoutId }) => {
-  // Default plate layout if no deckLayoutId is provided
-  const defaultPlateLayout = {
-    id: 'default',
-    platePositions: [
-      { id: PLATE_LAYOUT_NAME.IVL_96_FLAT_01 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_FLAT_02 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_DW_01 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_DW_02 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_FLAT_03 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_01 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_02 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_03 },
-      { id: PLATE_LAYOUT_NAME.IVL_384_FLAT_01 },
-      { id: PLATE_LAYOUT_NAME.IVL_384_FLAT_02 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_TEMPLATE_01 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_04 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_05 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_06 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_07 },
-    ],
+export const LFADeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {
+  const layout = deckLayout;
+  const { assayPlateConfig } = layout;
+
+  const renderPlateColumn = (column: number) => {
+    const numCols = 3;
+    const cellsForColumn = layout.platePositions.filter((_, index) => column === index % numCols);
+    return (
+      <div className="grid h-full grid-cols-1 grid-rows-5 gap-y-2">
+        {cellsForColumn.map((plate) => (
+          <div
+            key={plate.id}
+            className={cn(
+              'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
+              selectedPlate.toLowerCase() === plate.name.toLowerCase()
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'bg-white'
+            )}
+          >
+            {plate.isEmpty ? 'Empty' : plate.name}
+          </div>
+        ))}
+      </div>
+    );
   };
 
-  const layout = deckLayoutId
-    ? { id: deckLayoutId, platePositions: defaultPlateLayout.platePositions }
-    : defaultPlateLayout;
+  const renderDeviceLocations = () => {
+    const { numPlates, numRows, numColumns, deviceType } = assayPlateConfig;
+    const numDeviceCols = deviceType === 'Strip' ? 3 : 1; // 3 columns for Strip, 1 for Cassette
+    const numDeviceRows = Math.ceil(numPlates / numDeviceCols);
+
+    return (
+      <div
+        className="grid flex-1 gap-4 p-4"
+        style={{
+          gridTemplateColumns: `repeat(${numDeviceCols}, 1fr)`,
+          gridTemplateRows: `repeat(${numDeviceRows}, 1fr)`,
+        }}
+      >
+        {Array.from({ length: numPlates }).map((_, plateIndex) => (
+          <div
+            key={plateIndex}
+            className={cn(
+              'flex flex-col rounded border-2 border-black bg-white p-2',
+              deviceType === 'Strip' ? 'aspect-[2/3]' : 'aspect-[5/8]'
+            )}
+          >
+            <div
+              className="grid h-full w-full gap-1"
+              style={{
+                gridTemplateRows: `repeat(${numRows}, 1fr)`,
+                gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
+              }}
+            >
+              {Array.from({ length: numRows * numColumns }).map((_, cellIndex) => (
+                <div key={cellIndex} className="rounded border border-slate-300 bg-slate-100" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <Card className="p-4">
@@ -51,68 +88,28 @@ export const DeckLayout: FC<Props> = ({ selectedPlate, deckLayoutId }) => {
             <div className="text-center text-sm font-semibold">Plate Locations On Deck</div>
             <div className="grid flex-1 grid-cols-3 gap-x-6">
               {/* First Column */}
-              <div className="grid h-full grid-cols-1 grid-rows-5 gap-y-2">
-                {layout.platePositions.slice(0, 5).map((plate) => (
-                  <div
-                    key={plate.id}
-                    className={cn(
-                      'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
-                      selectedPlate === plate.id
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'bg-white'
-                    )}
-                  >
-                    {plate.id}
-                  </div>
-                ))}
-              </div>
-
+              {renderPlateColumn(0)}
               {/* Second Column */}
-              <div className="grid grid-cols-1 grid-rows-5 gap-y-2">
-                {layout.platePositions.slice(5, 10).map((plate) => (
-                  <div
-                    key={plate.id}
-                    className={cn(
-                      'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
-                      selectedPlate === plate.id
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'bg-white'
-                    )}
-                  >
-                    {plate.id}
-                  </div>
-                ))}
-              </div>
-
+              {renderPlateColumn(1)}
               {/* Third Column */}
-              <div className="grid grid-cols-1 grid-rows-5 gap-y-2">
-                {layout.platePositions.slice(10, 15).map((plate) => (
-                  <div
-                    key={plate.id}
-                    className={cn(
-                      'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
-                      selectedPlate === plate.id
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'bg-white'
-                    )}
-                  >
-                    {plate.id}
-                  </div>
-                ))}
-              </div>
+              {renderPlateColumn(2)}
             </div>
           </div>
 
-          {/* Plate Sealer */}
-          <div className="col-span-1 flex h-full flex-col">
-            <div className="mb-2 text-center text-sm font-semibold">Plate Sealer</div>
-            <div className="flex-1 rounded border-2 border-black bg-white" />
-          </div>
+          <div className="col-span-2 grid h-full grid-cols-4">
+            {/* Device Locations */}
+            <div className="col-span-3 flex h-full flex-col">
+              <div className="mb-2 text-center text-sm font-semibold">Device Locations</div>
+              {renderDeviceLocations()}
+            </div>
 
-          {/* Waste */}
-          <div className="col-span-1">
-            <div className="mb-2 text-center text-sm font-semibold">Waste</div>
-            <div className="mt-[50%] h-1/2 rounded border-2 border-black bg-white" />
+            {/* Waste */}
+            <div className="col-span-1 flex h-full flex-col">
+              <div className="mb-2 text-center text-sm font-semibold">Waste</div>
+              <div className="flex flex-1 items-center">
+                <div className="my-auto h-1/2 w-full rounded border-2 border-black bg-white" />
+              </div>
+            </div>
           </div>
         </div>
 

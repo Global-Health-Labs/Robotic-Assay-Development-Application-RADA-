@@ -47,7 +47,7 @@ interface LFAStepsFormProps {
 export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormProps) {
   const { data: experimentData } = useLFAExperiment(experimentId);
 
-  const plateConfig = experimentData?.plateConfig;
+  const plateConfig = experimentData?.deckLayout.assayPlateConfig;
   const locations = plateConfig?.locations || [];
   const steps = experimentData?.steps || [];
 
@@ -102,8 +102,6 @@ export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormPro
           source: step.source,
         };
       });
-
-      console.log('Transformed Steps:', transformedSteps);
 
       // Save steps first
       await onSubmit({ steps: transformedSteps });

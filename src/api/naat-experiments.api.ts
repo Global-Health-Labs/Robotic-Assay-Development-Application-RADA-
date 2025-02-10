@@ -1,6 +1,7 @@
 import axios from './axios';
 import { DispenseType } from '../utils/ExtractLiquidClass';
 import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
+import { PlateItem } from '@/types/plate.types';
 
 export type NewNAATExperiment = {
   name: string;
@@ -30,12 +31,12 @@ export interface Reagent {
   tipWashing?: 'Yes' | 'No';
 }
 
-export interface DeckLayout {
+export type DeckLayout = {
   id: string;
   name: string;
   description: string;
-  platePositions: { id: string; position: number }[];
-}
+  platePositions: PlateItem[];
+};
 
 // export interface Reagent {
 //   id: string;
@@ -65,6 +66,7 @@ export interface ExperimentMastermix {
 
 export type ExperimentWithMastermix = NAATExperiment & {
   mastermixes: Mastermix[];
+  deckLayout: DeckLayout;
 };
 
 export const getNAATExperiments = async (filters: ExperimentFilters = {}) => {

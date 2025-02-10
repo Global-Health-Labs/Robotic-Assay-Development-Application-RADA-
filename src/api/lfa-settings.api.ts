@@ -10,8 +10,9 @@ export interface AssayPlateConfig {
   name: string;
   description: string;
   assayPlatePrefix: string;
+  deviceType: 'Strip' | 'Cassette';
   numPlates: number;
-  numStrips: number;
+  numRows: number;
   numColumns: number;
   locations: PlateLocation[];
 }

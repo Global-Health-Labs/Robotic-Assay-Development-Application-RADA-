@@ -1,39 +1,37 @@
+import { DeckLayout } from '@/api/naat-experiments.api';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { FC } from 'react';
-import { PLATE_LAYOUT_NAME } from './types';
 
 interface Props {
   selectedPlate: string;
-  deckLayoutId?: string;
+  deckLayout: DeckLayout;
 }
 
-export const DeckLayout: FC<Props> = ({ selectedPlate, deckLayoutId }) => {
-  // Default plate layout if no deckLayoutId is provided
-  const defaultPlateLayout = {
-    id: 'default',
-    platePositions: [
-      { id: PLATE_LAYOUT_NAME.IVL_96_FLAT_01 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_FLAT_02 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_DW_01 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_DW_02 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_FLAT_03 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_01 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_02 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_03 },
-      { id: PLATE_LAYOUT_NAME.IVL_384_FLAT_01 },
-      { id: PLATE_LAYOUT_NAME.IVL_384_FLAT_02 },
-      { id: PLATE_LAYOUT_NAME.IVL_96_TEMPLATE_01 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_04 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_05 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_06 },
-      { id: PLATE_LAYOUT_NAME.PCR_COOLER_07 },
-    ],
-  };
+export const NAATDeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {
+  const layout = deckLayout;
 
-  const layout = deckLayoutId
-    ? { id: deckLayoutId, platePositions: defaultPlateLayout.platePositions }
-    : defaultPlateLayout;
+  const renderPlateColumn = (column: number) => {
+    const numCols = 3;
+    const cellsForColumn = layout.platePositions.filter((_, index) => column === index % numCols);
+    return (
+      <div className="grid h-full grid-cols-1 grid-rows-5 gap-y-2">
+        {cellsForColumn.map((plate) => (
+          <div
+            key={plate.id}
+            className={cn(
+              'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
+              selectedPlate.toLowerCase() === plate.name.toLowerCase()
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'bg-white'
+            )}
+          >
+            {plate.isEmpty ? 'Empty' : plate.name}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <Card className="p-4">
@@ -51,55 +49,11 @@ export const DeckLayout: FC<Props> = ({ selectedPlate, deckLayoutId }) => {
             <div className="text-center text-sm font-semibold">Plate Locations On Deck</div>
             <div className="grid flex-1 grid-cols-3 gap-x-6">
               {/* First Column */}
-              <div className="grid h-full grid-cols-1 grid-rows-5 gap-y-2">
-                {layout.platePositions.slice(0, 5).map((plate) => (
-                  <div
-                    key={plate.id}
-                    className={cn(
-                      'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
-                      selectedPlate === plate.id
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'bg-white'
-                    )}
-                  >
-                    {plate.id}
-                  </div>
-                ))}
-              </div>
-
+              {renderPlateColumn(0)}
               {/* Second Column */}
-              <div className="grid grid-cols-1 grid-rows-5 gap-y-2">
-                {layout.platePositions.slice(5, 10).map((plate) => (
-                  <div
-                    key={plate.id}
-                    className={cn(
-                      'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
-                      selectedPlate === plate.id
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'bg-white'
-                    )}
-                  >
-                    {plate.id}
-                  </div>
-                ))}
-              </div>
-
+              {renderPlateColumn(1)}
               {/* Third Column */}
-              <div className="grid grid-cols-1 grid-rows-5 gap-y-2">
-                {layout.platePositions.slice(10, 15).map((plate) => (
-                  <div
-                    key={plate.id}
-                    className={cn(
-                      'flex items-center justify-center rounded border-2 border-black p-2 text-xs transition-colors sm:text-sm',
-                      selectedPlate === plate.id
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'bg-white'
-                    )}
-                  >
-                    {plate.id}
-                  </div>
-                ))}
-              </div>
+              {renderPlateColumn(2)}
             </div>
           </div>
 

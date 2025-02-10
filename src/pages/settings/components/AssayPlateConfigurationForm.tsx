@@ -15,6 +15,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const locationSchema = z.object({
   dx: z.number().min(0, 'X offset must be non-negative'),
@@ -26,8 +33,11 @@ const configSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string(),
   assayPlatePrefix: z.string().min(1, 'Plate prefix is required'),
+  deviceType: z.enum(['Strip', 'Cassette'], {
+    required_error: 'Device type is required',
+  }),
   numPlates: z.number().min(1, 'Must have at least 1 plate'),
-  numStrips: z.number().min(1, 'Must have at least 1 strip'),
+  numRows: z.number().min(1, 'Must have at least 1 row'),
   numColumns: z.number().min(1, 'Must have at least 1 column'),
   locations: z.array(locationSchema).min(1, 'At least one location is required'),
 });
@@ -52,10 +62,11 @@ export function AssayPlateConfigurationForm({
       name: config?.name ?? '',
       description: config?.description ?? '',
       assayPlatePrefix: config?.assayPlatePrefix ?? '',
+      deviceType: config?.deviceType ?? 'Strip',
       numPlates: config?.numPlates ?? 1,
-      numStrips: config?.numStrips ?? 1,
+      numRows: config?.numRows ?? 1,
       numColumns: config?.numColumns ?? 1,
-      locations: config?.locations ?? [{ dx: 0, dz: 0 }], // Default to one location
+      locations: config?.locations ?? [{ dx: 0, dz: 0 }],
     },
   });
 
@@ -81,34 +92,19 @@ export function AssayPlateConfigurationForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="assayPlatePrefix"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Plate Prefix</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -124,6 +120,42 @@ export function AssayPlateConfigurationForm({
               )}
             />
 
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="assayPlatePrefix"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Plate Prefix</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="deviceType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Device Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select device type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Strip">Strip</SelectItem>
+                        <SelectItem value="Cassette">Cassette</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
@@ -144,15 +176,15 @@ export function AssayPlateConfigurationForm({
               />
               <FormField
                 control={form.control}
-                name="numStrips"
+                name="numRows"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Strips</FormLabel>
+                    <FormLabel>Number of Rows</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(+e.target.value)}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -169,7 +201,7 @@ export function AssayPlateConfigurationForm({
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(+e.target.value)}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />

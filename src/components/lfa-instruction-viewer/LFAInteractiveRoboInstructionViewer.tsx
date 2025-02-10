@@ -1,12 +1,14 @@
-import { LFAExperimentWithPlateConfig, LFARoboInstruction } from '@/api/lfa-experiments.api';
-import { last, trim } from 'lodash-es';
+import { LFAExperimentWithDeckLayout, LFARoboInstruction } from '@/api/lfa-experiments.api';
+import { last, size, trim } from 'lodash-es';
 import { FC, useState } from 'react';
 import { InstructionDetails } from './InstructionDetails';
 import { PlateLayout } from './PlateLayout';
 import { SolutionsTable } from './SolutionsTable';
+import { LFADeckLayout } from '@/components/lfa-instruction-viewer/DeckLayout';
+import { plateIdToName } from '@/components/lfa-instruction-viewer/plate.util';
 
 interface Props {
-  experiment: LFAExperimentWithPlateConfig;
+  experiment: LFAExperimentWithDeckLayout;
 }
 
 const LFAInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
@@ -22,6 +24,18 @@ const LFAInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
   const handleRowClick = (row: LFARoboInstruction) => {
     setSelectedState({ ...row });
   };
+
+  const [selectedPlate, selectedWellId] = selectedState.plateWell.split('|').map((part, index) => {
+    const val = trim(part);
+    if (size(val) === 0) {
+      return '';
+    }
+
+    if (index === 0) {
+      return plateIdToName(val);
+    }
+    return Number(val);
+  });
 
   return (
     <div className="flex flex-col">
@@ -39,12 +53,15 @@ const LFAInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
           <div className="relative">
             <PlateLayout
               plateWellCount={currentPlateWell}
-              selectedWellId={Number(trim(last(selectedState.plateWell.split('|'))))}
+              selectedWellId={selectedWellId as number}
               onCellPosition={setSelectedCellPosition}
             />
             <InstructionDetails selectedState={selectedState} cellPosition={selectedCellPosition} />
           </div>
-          {/* <DeckLayout selectedPlate={selectedState.plate} /> */}
+          <LFADeckLayout
+            deckLayout={experiment.deckLayout}
+            selectedPlate={selectedPlate as string}
+          />
         </div>
       </div>
     </div>

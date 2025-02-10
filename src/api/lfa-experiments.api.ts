@@ -1,4 +1,4 @@
-import { AssayPlateConfig } from '@/types/lfa.types';
+import { AssayPlateConfig, DeckLayout } from '@/types/lfa.types';
 import axios from './axios';
 import { useQuery } from '@tanstack/react-query';
 import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
@@ -16,7 +16,7 @@ export interface LFAStep {
 export type NewLFAExperiment = {
   name: string;
   numReplicates: number;
-  plateConfigId: string;
+  deckLayoutId: string;
   type: 'LFA';
 };
 
@@ -29,8 +29,8 @@ export type LFAExperiment = {
 } & Experiment &
   NewLFAExperiment;
 
-export type LFAExperimentWithPlateConfig = LFAExperiment & {
-  plateConfig: AssayPlateConfig;
+export type LFAExperimentWithDeckLayout = LFAExperiment & {
+  deckLayout: DeckLayout;
 };
 
 export type LFARoboInstruction = {
@@ -60,10 +60,9 @@ export async function getLFAExperiments(filters: ExperimentFilters = {}) {
 
   params.append('type', 'LFA');
 
-  const { data } = await axios.get<PaginatedResponse<LFAExperimentWithPlateConfig>>(
-    '/experiments',
-    { params }
-  );
+  const { data } = await axios.get<PaginatedResponse<LFAExperimentWithDeckLayout>>('/experiments', {
+    params,
+  });
   return {
     ...data,
     data: data.data.map((experiment) => {
@@ -73,7 +72,7 @@ export async function getLFAExperiments(filters: ExperimentFilters = {}) {
 }
 
 export async function getLFAExperiment(id: string) {
-  const { data } = await axios.get<LFAExperimentWithPlateConfig>(`/experiments/lfa/${id}`);
+  const { data } = await axios.get<LFAExperimentWithDeckLayout>(`/experiments/lfa/${id}`);
   return data;
 }
 

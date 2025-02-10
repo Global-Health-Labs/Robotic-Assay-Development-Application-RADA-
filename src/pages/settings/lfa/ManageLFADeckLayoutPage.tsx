@@ -1,0 +1,345 @@
+import axios from '@/api/axios';
+import { getLFAConfigs } from '@/api/lfa-settings.api';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import SortablePlate from '@/pages/settings/components/SortablePlate';
+import {
+  createDefaultPlates,
+  generatePlateName,
+  generateSequenceNumber,
+} from '@/pages/settings/util/deck-layout.util';
+import { DeckLayout } from '@/types/lfa.types';
+import { PlateItem } from '@/types/plate.types';
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext } from '@dnd-kit/sortable';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import dayjs from 'dayjs';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
+
+const defaultPlates: PlateItem[] = createDefaultPlates();
+
+interface LayoutEditorProps {
+  layout?: DeckLayout;
+  onClose: () => void;
+}
+
+const layoutFormSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  description: z.string().optional(),
+  assayPlateConfigId: z.string().min(1, 'Assay Plate Configuration is required'),
+});
+
+type LayoutFormValues = z.infer<typeof layoutFormSchema>;
+
+function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
+  const form = useForm<LayoutFormValues>({
+    resolver: zodResolver(layoutFormSchema),
+    defaultValues: {
+      name: layout?.name ?? '',
+      description: layout?.description ?? '',
+      assayPlateConfigId: layout?.assayPlateConfigId ?? '',
+    },
+  });
+  const [plates, setPlates] = useState<PlateItem[]>(layout?.platePositions ?? defaultPlates);
+  const sensors = useSensors(useSensor(PointerSensor));
+  const queryClient = useQueryClient();
+
+  const { data: assayPlateConfigs = [] } = useQuery({
+    queryKey: ['assayPlateConfigs'],
+    queryFn: getLFAConfigs,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (
+      data: Omit<DeckLayout, 'id' | 'createdAt' | 'updatedAt' | 'assayPlateConfig'>
+    ) => {
+      const response = await axios.post('/settings/lfa/deck-layouts', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lfaDeckLayouts'] });
+      toast.success('Layout created successfully');
+      onClose();
+    },
+    onError: (error: AxiosError) => {
+      const data = error.response?.data as { message: string };
+      toast.error(data?.message ?? 'Failed to create layout');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: Partial<DeckLayout>) => {
+      const response = await axios.patch(`/settings/lfa/deck-layouts/${layout!.id}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lfaDeckLayouts'] });
+      toast.success('Layout updated successfully');
+      onClose();
+    },
+    onError: (error: AxiosError) => {
+      const data = error.response?.data as { message: string };
+      toast.error(data?.message ?? 'Failed to update layout');
+    },
+  });
+
+  const updateSequenceNumbers = (updatedPlates: PlateItem[]) => {
+    const counters = new Map<string, number>();
+
+    return updatedPlates.map((plate) => {
+      if (plate.isEmpty) return plate;
+
+      const key = `${plate.wellCount}_${plate.plateDescriptor}`;
+      const count = (counters.get(key) || 0) + 1;
+      counters.set(key, count);
+
+      const sequenceNumber = generateSequenceNumber(count);
+      return {
+        ...plate,
+        sequenceNumber,
+        name: generatePlateName(plate.wellCount, plate.plateDescriptor, sequenceNumber),
+      };
+    });
+  };
+
+  const handleSetEmpty = (id: string, isEmpty: boolean) => {
+    setPlates((prevPlates) => {
+      const updatedPlates = prevPlates.map((plate) =>
+        plate.id === id ? { ...plate, isEmpty } : plate
+      );
+      return updateSequenceNumbers(updatedPlates);
+    });
+  };
+
+  const handleUpdatePlate = (id: string, updates: Partial<PlateItem>) => {
+    setPlates((prevPlates) => {
+      const updatedPlates = prevPlates.map((plate) =>
+        plate.id === id ? { ...plate, ...updates } : plate
+      );
+      return updateSequenceNumbers(updatedPlates);
+    });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setPlates((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const reorderedPlates = arrayMove(items, oldIndex, newIndex);
+        return updateSequenceNumbers(reorderedPlates);
+      });
+    }
+  };
+
+  const onSubmit = (values: LayoutFormValues) => {
+    const data = {
+      ...values,
+      platePositions: plates,
+    };
+
+    if (layout) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-1 flex-col gap-4 overflow-hidden"
+      >
+        <div className="flex flex-col gap-4 overflow-y-auto px-1">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="assayPlateConfigId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assay Plate Configuration</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a configuration" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {assayPlateConfigs.map((config) => (
+                      <SelectItem key={config.id} value={config.id}>
+                        {config.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex flex-col gap-2">
+            <Label>Plate Positions</Label>
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <SortableContext items={plates.map((plate) => plate.id)}>
+                <div className="grid grid-cols-3 gap-4">
+                  {plates.map((plate) => (
+                    <SortablePlate
+                      key={plate.id}
+                      plate={plate}
+                      onSetEmpty={handleSetEmpty}
+                      onUpdatePlate={handleUpdatePlate}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+            {layout ? 'Update Layout' : 'Create Layout'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
+export default function ManageLFADeckLayoutPage() {
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [selectedLayout, setSelectedLayout] = useState<DeckLayout | undefined>();
+
+  const { data: layouts = [], isLoading } = useQuery({
+    queryKey: ['lfaDeckLayouts'],
+    queryFn: async () => {
+      const response = await axios.get('/settings/lfa/deck-layouts');
+      return response.data as DeckLayout[];
+    },
+  });
+
+  const handleEdit = (layout: DeckLayout) => {
+    setSelectedLayout(layout);
+    setIsEditorOpen(true);
+  };
+
+  const handleCreate = () => {
+    setSelectedLayout(undefined);
+    setIsEditorOpen(true);
+  };
+
+  return (
+    <div className="container py-6">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">LFA Deck Layouts</h1>
+        <Button onClick={handleCreate}>Create New Layout</Button>
+      </div>
+
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : layouts.length === 0 ? (
+        <div className="text-center text-muted-foreground">No layouts found</div>
+      ) : (
+        <div className="grid gap-4">
+          {(layouts || []).map((layout) => (
+            <Card key={layout.id} className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">{layout.name}</h3>
+                  {layout.description && (
+                    <p className="mt-1 text-sm text-muted-foreground">{layout.description}</p>
+                  )}
+                  {layout.assayPlateConfig && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Assay Plate Config: {layout.assayPlateConfig.name}
+                    </div>
+                  )}
+
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Created by {layout.creator?.fullname || 'Unknown'} on{' '}
+                    {dayjs(layout.createdAt).format('MMM DD, YYYY')}
+                  </div>
+                </div>
+                <Button variant="outline" onClick={() => handleEdit(layout)}>
+                  Edit Layout
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
+        <DialogContent className="flex max-h-[100vh] max-w-6xl flex-col overflow-hidden p-4 sm:max-h-[98vh]">
+          <DialogHeader>
+            <DialogTitle>{selectedLayout ? 'Edit Layout' : 'Create New Layout'}</DialogTitle>
+          </DialogHeader>
+
+          <LayoutEditor
+            layout={selectedLayout}
+            onClose={() => {
+              setIsEditorOpen(false);
+              setSelectedLayout(undefined);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

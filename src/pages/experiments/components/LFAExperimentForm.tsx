@@ -1,5 +1,4 @@
 import { LFAExperiment, NewLFAExperiment } from '@/api/lfa-experiments.api';
-import { getLFAConfigs } from '@/api/lfa-settings.api';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -21,9 +20,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { AssayPlateConfig } from '@/types/lfa.types';
+import { DeckLayout } from '@/types/lfa.types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
+import axios from '@/api/axios';
 import { values } from 'lodash-es';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
@@ -36,11 +36,11 @@ const formSchema = z.object({
       required_error: 'Name of experimental plan is required',
     })
     .min(1, 'Name of experimental plan is required'),
-  plateConfigId: z
+  deckLayoutId: z
     .string({
-      required_error: 'Plate configuration is required',
+      required_error: 'Deck layout is required',
     })
-    .min(1, 'Plate configuration is required'),
+    .min(1, 'Deck layout is required'),
   numReplicates: z.coerce
     .number()
     .min(1, 'Number of technical replicates must be 1 or greater')
@@ -58,22 +58,21 @@ interface LFAExperimentFormProps {
   mode: 'create' | 'edit';
 }
 
-const getFormDefaultValues = (experiment?: LFAExperiment): FormValues => {
-  if (experiment) {
+function getFormDefaultValues(experiment?: LFAExperiment): FormValues {
+  if (!experiment) {
     return {
-      name: experiment.name,
-      plateConfigId: experiment.plateConfigId || '',
-      numReplicates: experiment.numReplicates,
+      name: '',
+      deckLayoutId: '',
+      numReplicates: 1,
     };
   }
+
   return {
-    name: '',
-    plateConfigId: '',
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    numReplicates: '' as any,
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+    name: experiment.name,
+    deckLayoutId: experiment.deckLayoutId,
+    numReplicates: experiment.numReplicates,
   };
-};
+}
 
 export function LFAExperimentForm({
   defaultValues,
@@ -84,10 +83,6 @@ export function LFAExperimentForm({
 }: LFAExperimentFormProps) {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const { data: configs = [], isLoading } = useQuery<AssayPlateConfig[]>({
-    queryKey: ['assayPlateConfigs'],
-    queryFn: getLFAConfigs,
-  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -95,22 +90,28 @@ export function LFAExperimentForm({
     mode: 'onChange',
   });
 
-  const handleSubmit = (data: FormValues) => {
+  const { data: deckLayouts = [], isLoading: isLoadingDeckLayouts } = useQuery<DeckLayout[]>({
+    queryKey: ['lfaDeckLayouts'],
+    queryFn: async () => {
+      const response = await axios.get('/experiments/lfa/deck-layouts');
+      return response.data;
+    },
+  });
+
+  function onFormSubmit(data: FormValues) {
     const isDirty = values(form.formState.dirtyFields).some((dirty) => dirty);
     onSubmit({ ...data, type: 'LFA' }, isDirty);
-  };
-
-  const selectedConfig = configs.find((config) => config.id === form.watch('plateConfigId'));
+  }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onFormSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name of Experimental Plan</FormLabel>
+              <FormLabel>Name</FormLabel>
               <FormControl>
                 <Input
                   placeholder="Enter experiment name"
@@ -134,10 +135,10 @@ export function LFAExperimentForm({
 
         <FormField
           control={form.control}
-          name="plateConfigId"
+          name="deckLayoutId"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Plate Configuration</FormLabel>
+              <FormLabel>Deck Layout</FormLabel>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -147,42 +148,37 @@ export function LFAExperimentForm({
                       aria-expanded={open}
                       className={cn('justify-between', !field.value && 'text-muted-foreground')}
                     >
-                      {isLoading
+                      {isLoadingDeckLayouts
                         ? 'Loading configurations...'
                         : field.value
-                          ? configs.find((config) => config.id === field.value)?.name
-                          : 'Select plate configuration'}
+                          ? deckLayouts.find((layout) => layout.id === field.value)?.name
+                          : 'Select deck layout'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="p-0">
                   <Command>
-                    <CommandInput placeholder="Search configurations..." />
+                    <CommandInput placeholder="Search deck layouts..." />
                     <CommandList>
-                      <CommandEmpty>No configurations found.</CommandEmpty>
+                      <CommandEmpty>No deck layouts found.</CommandEmpty>
                       <CommandGroup>
-                        {configs.map((config) => (
+                        {values(deckLayouts).map((layout) => (
                           <CommandItem
-                            key={config.id}
-                            value={config.id}
+                            value={layout.name}
+                            key={layout.id}
                             onSelect={() => {
-                              form.setValue('plateConfigId', config.id);
+                              form.setValue('deckLayoutId', layout.id);
                               setOpen(false);
                             }}
                           >
                             <Check
                               className={cn(
                                 'mr-2 h-4 w-4',
-                                config.id === field.value ? 'opacity-100' : 'opacity-0'
+                                layout.id === field.value ? 'opacity-100' : 'opacity-0'
                               )}
                             />
-                            <div>
-                              <div>{config.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {config.description}
-                              </div>
-                            </div>
+                            {layout.name}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -198,26 +194,9 @@ export function LFAExperimentForm({
                     : 'text-muted-foreground/50'
                 )}
               >
-                Select a predefined plate configuration for your experiment
+                Select a deck layout to use for this experiment.
               </FormDescription>
               <FormMessage />
-              {selectedConfig && (
-                <div className="mt-2 rounded-md bg-muted p-4 text-sm">
-                  <div className="mb-2 font-medium">Configuration Details:</div>
-                  <div className="flex gap-2">
-                    <div className="flex flex-col gap-1 text-muted-foreground">
-                      <div>Number of Plates</div>
-                      <div>Strips per Plate</div>
-                      <div>Number of Columns</div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <div>{selectedConfig.numPlates}</div>
-                      <div>{selectedConfig.numStrips}</div>
-                      <div>{selectedConfig.numColumns}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </FormItem>
           )}
         />
@@ -227,12 +206,12 @@ export function LFAExperimentForm({
           name="numReplicates"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Technical Replicates</FormLabel>
+              <FormLabel>Number of Technical Replicates</FormLabel>
               <FormControl>
                 <Input
                   min={1}
                   {...field}
-                  onFocus={() => setFocusedField('numOfTechnicalReplicates')}
+                  onFocus={() => setFocusedField('numReplicates')}
                   onBlur={() => setFocusedField(null)}
                 />
               </FormControl>
@@ -251,12 +230,12 @@ export function LFAExperimentForm({
           )}
         />
 
-        <div className="flex justify-end space-x-4 pt-4">
+        <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {mode === 'create' ? 'Create Experiment' : 'Update Experiment'}
+            {mode === 'create' ? 'Create Experiment' : 'Save Changes'}
           </Button>
         </div>
       </form>

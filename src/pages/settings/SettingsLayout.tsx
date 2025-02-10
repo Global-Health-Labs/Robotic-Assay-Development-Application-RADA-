@@ -96,6 +96,10 @@ const sidebarNavItems = [
         href: '/settings/lfa/assay-plate-config',
       },
       {
+        title: 'Deck Layout',
+        href: '/settings/lfa/deck-layouts',
+      },
+      {
         title: 'Liquid Types',
         href: '/settings/lfa/liquid-types',
       },

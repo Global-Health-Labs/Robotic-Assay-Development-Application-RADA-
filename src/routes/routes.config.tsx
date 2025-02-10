@@ -136,11 +136,15 @@ const protectedRoutes: RouteObject[] = [
           },
           {
             path: 'naat/deck-layout',
-            lazy: () => importComponent(import('@/pages/settings/naat/NAATDeckLayoutSettingsPage')),
+            lazy: () => importComponent(import('@/pages/settings/naat/ManageNAATDeckLayoutPage')),
           },
           {
             path: 'lfa/assay-plate-config',
             lazy: () => importComponent(import('@/pages/settings/lfa/ManageAssayPlateConfigPage')),
+          },
+          {
+            path: 'lfa/deck-layouts',
+            lazy: () => importComponent(import('@/pages/settings/lfa/ManageLFADeckLayoutPage')),
           },
           {
             path: 'lfa/liquid-types',

@@ -17,6 +17,7 @@ import {
   SelectedExperimentalPlanRow,
   SelectedState,
 } from './types';
+import { plateIdToName } from '@/components/naat-instruction-viewer/plate.util';
 
 interface Props {
   experiment: ExperimentWithMastermix;
@@ -106,7 +107,7 @@ export const SolutionsTable: FC<Props> = ({
                   selectedState.rowId === row.id && 'text-primary-foreground'
                 )}
               >
-                {row.plate}
+                {plateIdToName(row.plate)}
               </TableCell>
               <TableCell
                 className={cn(

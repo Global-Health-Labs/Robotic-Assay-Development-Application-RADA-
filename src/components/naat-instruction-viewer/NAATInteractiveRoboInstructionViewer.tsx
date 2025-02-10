@@ -1,10 +1,11 @@
 import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { FC, useState } from 'react';
-import { DeckLayout } from './DeckLayout';
+import { NAATDeckLayout } from './DeckLayout';
 import { InstructionDetails } from './InstructionDetails';
 import { PlateLayout } from './PlateLayout';
 import { SolutionsTable } from './SolutionsTable';
 import { SelectedExperimentalPlanRow, SelectedState } from './types';
+import { plateIdToName } from '@/components/naat-instruction-viewer/plate.util';
 
 interface Props {
   experiment: ExperimentWithMastermix;
@@ -33,6 +34,8 @@ const NAATInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
     });
   };
 
+  const selectedPlateName = plateIdToName(selectedState.plate);
+
   return (
     <div className="flex flex-col">
       <div className="flex gap-4">
@@ -54,7 +57,7 @@ const NAATInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
             />
             <InstructionDetails selectedState={selectedState} cellPosition={selectedCellPosition} />
           </div>
-          <DeckLayout selectedPlate={selectedState.plate} />
+          <NAATDeckLayout deckLayout={experiment.deckLayout} selectedPlate={selectedPlateName} />
         </div>
       </div>
     </div>

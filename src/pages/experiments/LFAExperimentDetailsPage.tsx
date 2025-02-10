@@ -24,7 +24,7 @@ export default function LFAExperimentDetailsPage() {
       const experimentData: NewLFAExperiment = {
         name: data.name,
         numReplicates: data.numReplicates,
-        plateConfigId: data.plateConfigId,
+        deckLayoutId: data.deckLayoutId,
         type: 'LFA',
       };
 

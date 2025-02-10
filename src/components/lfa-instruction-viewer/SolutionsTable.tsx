@@ -1,8 +1,9 @@
 import {
   getLFAInstructionData,
-  LFAExperimentWithPlateConfig,
+  LFAExperimentWithDeckLayout,
   LFARoboInstruction,
 } from '@/api/lfa-experiments.api';
+import { plateIdToName } from '@/components/lfa-instruction-viewer/plate.util';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
@@ -17,7 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { FC, useEffect, useState } from 'react';
 
 interface Props {
-  experiment: LFAExperimentWithPlateConfig;
+  experiment: LFAExperimentWithDeckLayout;
   selectedState: LFARoboInstruction;
   onRowClick: (row: LFARoboInstruction) => void;
   onPlateWellChange: (wellCount: number) => void;
@@ -103,8 +104,7 @@ export const SolutionsTable: FC<Props> = ({
                   selectedState.solution === row.solution && 'text-primary-foreground'
                 )}
               >
-                {row.plateWell.split('|')[0]}
-                {/* {row.plateWell} */}
+                {plateIdToName(row.plateWell.split('|')[0])}
               </TableCell>
               <TableCell
                 className={cn(
