@@ -78,12 +78,12 @@ const protectedRoutes: RouteObject[] = [
         lazy: () => importComponent(import('@/pages/experiments/ExperimentsPage')),
       },
       {
-        path: '/experiments/naat/:id',
-        lazy: () => importComponent(import('@/pages/experiments/NAATExperimentSummaryPage')),
-      },
-      {
         path: '/experiments/naat/new',
         lazy: () => importComponent(import('@/pages/experiments/NAATExperimentDetailsPage')),
+      },
+      {
+        path: '/experiments/naat/:id',
+        lazy: () => importComponent(import('@/pages/experiments/NAATExperimentSummaryPage')),
       },
       {
         path: '/experiments/naat/:id/edit',
@@ -100,6 +100,10 @@ const protectedRoutes: RouteObject[] = [
       {
         path: '/experiments/naat/:id/instructions',
         lazy: () => importComponent(import('@/pages/experiments/NAATRoboInstructionViewerPage')),
+      },
+      {
+        path: '/experiments/lfa/new',
+        lazy: () => importComponent(import('@/pages/experiments/LFAExperimentDetailsPage')),
       },
       {
         path: '/experiments/lfa/:id',
