@@ -8,6 +8,7 @@ import {
 } from '@/api/lfa-experiments.api';
 import { LFAExperimentForm } from '@/pages/experiments/components/LFAExperimentForm';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { isEmpty } from 'lodash-es';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -15,7 +16,7 @@ export default function LFAExperimentDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const isEditMode = id !== 'new';
+  const isEditMode = !isEmpty(id);
 
   const { data: experimentData, isLoading } = useLFAExperiment(id!, !isEditMode);
 
