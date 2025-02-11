@@ -1,13 +1,23 @@
 import axios, { InternalAxiosRequestConfig } from 'axios';
 import { toast } from 'sonner';
 
+declare global {
+  interface Window {
+    _env_: {
+      VITE_BACKEND_URL: string;
+    };
+  }
+}
+
+const backendUrl = window._env_?.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL;
+
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
+  baseURL: backendUrl,
   timeout: 10000,
   withCredentials: true,
 });
 
-console.log('API Bae URL', import.meta.env.VITE_BACKEND_URL);
+console.log('API Base URL', backendUrl);
 
 instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (!config.url?.endsWith('/auth/login') && config.withCredentials !== false) {
