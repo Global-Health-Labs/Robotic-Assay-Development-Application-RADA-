@@ -1,6 +1,7 @@
 import axios from '@/api/axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -20,17 +21,17 @@ type EditState = {
   id: string;
   value: string;
   displayName: string;
+  needsTipWashing: boolean;
   isNew?: boolean;
 };
 
-// This would come from your backend
 export default function ManageNAATLiquidTypesPage() {
   const queryClient = useQueryClient();
   const { data: liquidTypes = [], isLoading } = useLiquidTypes();
   const [editState, setEditState] = useState<EditState | null>(null);
 
   const addMutation = useMutation({
-    mutationFn: async (data: { value: string; displayName: string }) => {
+    mutationFn: async (data: { value: string; displayName: string; needsTipWashing: boolean }) => {
       const res = await axios.post('/settings/naat/liquid-types', data);
       return res.data;
     },
@@ -59,7 +60,7 @@ export default function ManageNAATLiquidTypesPage() {
       data,
     }: {
       id: string;
-      data: { value: string; displayName: string };
+      data: { value: string; displayName: string; needsTipWashing: boolean };
     }) => {
       const res = await axios.put(`/settings/naat/liquid-types/${id}`, data);
       return res.data;
@@ -114,6 +115,7 @@ export default function ManageNAATLiquidTypesPage() {
       id: newId,
       value: '',
       displayName: '',
+      needsTipWashing: false,
       isNew: true,
     };
     setEditState(newType);
@@ -124,6 +126,7 @@ export default function ManageNAATLiquidTypesPage() {
       id: type.id,
       value: type.value,
       displayName: type.displayName,
+      needsTipWashing: type.needsTipWashing,
     });
   };
 
@@ -134,7 +137,7 @@ export default function ManageNAATLiquidTypesPage() {
   const handleSaveEdit = async () => {
     if (!editState) return;
 
-    const { value, displayName } = editState;
+    const { value, displayName, needsTipWashing } = editState;
 
     if (!value.trim() || !displayName.trim()) {
       toast.error('Both value and display name are required');
@@ -152,9 +155,9 @@ export default function ManageNAATLiquidTypesPage() {
     }
 
     if (editState.isNew) {
-      addMutation.mutate({ value, displayName });
+      addMutation.mutate({ value, displayName, needsTipWashing });
     } else {
-      updateMutation.mutate({ id: editState.id, data: { value, displayName } });
+      updateMutation.mutate({ id: editState.id, data: { value, displayName, needsTipWashing } });
     }
   };
 
@@ -204,6 +207,7 @@ export default function ManageNAATLiquidTypesPage() {
           <TableRow>
             <TableHead>Display Name</TableHead>
             <TableHead>Value</TableHead>
+            <TableHead>Needs Tip Washing</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -224,6 +228,16 @@ export default function ManageNAATLiquidTypesPage() {
                   value={editState?.value || ''}
                   onChange={(e) => handleValueChange(e.target.value)}
                   placeholder="Enter value"
+                />
+              </TableCell>
+              <TableCell>
+                <Checkbox
+                  checked={editState?.needsTipWashing || false}
+                  onCheckedChange={(checked) =>
+                    setEditState((prev) =>
+                      prev ? { ...prev, needsTipWashing: checked as boolean } : null
+                    )
+                  }
                 />
               </TableCell>
               <TableCell>
@@ -272,6 +286,23 @@ export default function ManageNAATLiquidTypesPage() {
                   />
                 ) : (
                   type.value
+                )}
+              </TableCell>
+              <TableCell>
+                {editState?.id === type.id ? (
+                  <Checkbox
+                    checked={editState.needsTipWashing}
+                    onCheckedChange={(checked) =>
+                      setEditState((prev) =>
+                        prev ? { ...prev, needsTipWashing: checked as boolean } : null
+                      )
+                    }
+                  />
+                ) : (
+                  <Checkbox
+                    checked={type.needsTipWashing}
+                    disabled
+                  />
                 )}
               </TableCell>
               <TableCell>

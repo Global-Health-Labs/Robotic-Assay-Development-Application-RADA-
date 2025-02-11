@@ -28,7 +28,7 @@ const stepSchema = z.object({
   location: z.string().min(1, 'Location is required'),
   volume: z.number().min(0, 'Volume must be a positive number'),
   liquidClass: z.string().min(1, 'Liquid type is required'),
-  time: z.number().min(0, 'Time must be a positive number'),
+  time: z.number().min(-1000, 'Invalid time'),
   source: z.string().min(1, 'Source is required'),
 });
 

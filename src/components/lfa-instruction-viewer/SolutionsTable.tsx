@@ -73,7 +73,7 @@ export const SolutionsTable: FC<Props> = ({
           <TableRow>
             <TableHead className="border-r">Solution</TableHead>
             <TableHead className="border-r">Plate</TableHead>
-            <TableHead className="border-r px-1">Well</TableHead>
+            <TableHead className="border-r px-1">Volume</TableHead>
             <TableHead className="text-center">Done</TableHead>
           </TableRow>
         </TableHeader>

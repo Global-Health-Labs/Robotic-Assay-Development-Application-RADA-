@@ -5,6 +5,7 @@ export type LiquidType = {
   id: string;
   value: string;
   displayName: string;
+  needsTipWashing: boolean;
   createdAt: string;
   updatedAt: string;
   lastUpdatedBy: string;
