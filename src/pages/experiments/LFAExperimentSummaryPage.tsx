@@ -27,7 +27,7 @@ export default function LFAExperimentSummaryPage() {
   }
 
   return (
-    <div className="max-w-2xl py-4 md:py-10">
+    <div className="max-w-4xl py-4 md:py-10">
       <div className="mb-8 flex w-full items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">{experimentData?.name}</h2>

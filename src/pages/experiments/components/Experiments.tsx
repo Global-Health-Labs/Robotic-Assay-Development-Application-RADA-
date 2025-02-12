@@ -10,10 +10,13 @@ import ExperimentActions from '@/pages/experiments/components/ExperimentActions'
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { first } from 'lodash-es';
 
 interface ExperimentsProps {
   type: 'NAAT' | 'LFA';
+  initialFilters: ExperimentFilters;
+  onFiltersChange: (type: 'NAAT' | 'LFA', filters: Partial<ExperimentFilters>) => void;
 }
 
 export const columns: ColumnDef<Experiment>[] = [
@@ -54,64 +57,6 @@ export const columns: ColumnDef<Experiment>[] = [
     header: ({ column }) => <DataTableColumnHeader column={column} title="Owner" />,
     enableSorting: true,
   },
-  // {
-  //   accessorKey: 'numOfSampleConcentrations',
-  //   header: ({ column }) => (
-  //     <div className="hidden lg:block">
-  //       <DataTableColumnHeader column={column} title="Number of Samples" />
-  //     </div>
-  //   ),
-  //   enableSorting: false,
-  //   cell: ({ row }) => (
-  //     <div className="hidden lg:block">{row.getValue('numOfSampleConcentrations')}</div>
-  //   ),
-  // },
-  // {
-  //   accessorKey: 'numOfTechnicalReplicates',
-  //   header: ({ column }) => (
-  //     <div className="hidden lg:block">
-  //       <DataTableColumnHeader column={column} title="Technical Replicates" />
-  //     </div>
-  //   ),
-  //   enableSorting: false,
-  //   cell: ({ row }) => (
-  //     <div className="hidden lg:block">{row.getValue('numOfTechnicalReplicates')}</div>
-  //   ),
-  // },
-  // {
-  //   accessorKey: 'mastermixVolumePerReaction',
-  //   header: ({ column }) => (
-  //     <div className="hidden lg:block">
-  //       <DataTableColumnHeader column={column} title="Mastermix Volume (µL)" />
-  //     </div>
-  //   ),
-  //   enableSorting: false,
-  //   cell: ({ row }) => (
-  //     <div className="hidden lg:block">{row.getValue('mastermixVolumePerReaction')}</div>
-  //   ),
-  // },
-  // {
-  //   accessorKey: 'sampleVolumePerReaction',
-  //   header: ({ column }) => (
-  //     <div className="hidden lg:block">
-  //       <DataTableColumnHeader column={column} title="Sample Volume (µL)" />
-  //     </div>
-  //   ),
-  //   enableSorting: false,
-  //   cell: ({ row }) => (
-  //     <div className="hidden lg:block">{row.getValue('sampleVolumePerReaction')}</div>
-  //   ),
-  // },
-  // {
-  //   accessorKey: 'pcrPlateSize',
-  //   header: ({ column }) => (
-  //     <div className="hidden lg:block">
-  //       <DataTableColumnHeader column={column} title="PCR Plate Size" />
-  //     </div>
-  //   ),
-  //   enableSorting: false,
-  //   cell: ({ row }) => <div className="hidden lg:block">{row.getValue('pcrPlateSize')}</div>,
-  // },
   {
     id: 'actions',
     header: 'Actions',
@@ -119,59 +64,71 @@ export const columns: ColumnDef<Experiment>[] = [
   },
 ];
 
-const Experiments: React.FC<ExperimentsProps> = ({ type }) => {
+const Experiments: React.FC<ExperimentsProps> = ({ type, initialFilters, onFiltersChange }) => {
   const pagination = useTableState((state) => state.pagination);
   const setPagination = useTableState((state) => state.setPagination);
   const sorting = useTableState((state) => state.sorting);
   const setSorting = useTableState((state) => state.setSorting);
   const [filters, setFilters] = useState<ExperimentFilters>({
-    page: pagination.pageIndex + 1,
-    perPage: pagination.pageSize,
-    search: '',
+    pagination: {
+      pageIndex: 0,
+      pageSize: 10,
+    },
+    sorting: [],
+    search: initialFilters.search,
     type: type,
   });
+
+  const filtersChanged = useCallback((newFilters: Partial<ExperimentFilters>) => {
+    setFilters((prev: ExperimentFilters) => ({
+      ...prev,
+      ...newFilters,
+    }));
+    onFiltersChange(type, newFilters);
+  }, []);
+
+  useEffect(() => {
+    setPagination(initialFilters.pagination);
+    setSorting(initialFilters.sorting);
+  }, []);
+
+  // Synchronize pagination with filters
+  useEffect(() => {
+    filtersChanged({ pagination });
+  }, [pagination, filtersChanged]);
+
+  // Synchronize sorting with filters
+  useEffect(() => {
+    filtersChanged({ sorting });
+  }, [sorting, filtersChanged]);
+
+  const onSearchChange = (value: string) => {
+    setPagination({ pageIndex: 0, pageSize: pagination.pageSize });
+    filtersChanged({ search: value });
+  };
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['experiments', filters],
     queryFn: () => {
-      if (type === 'LFA') {
-        return getLFAExperiments(filters) as Promise<PaginatedResponse<Experiment>>;
+      const params = new URLSearchParams();
+
+      params.append('page', ((filters.pagination.pageIndex || 0) + 1).toString());
+      params.append('perPage', filters.pagination.pageSize.toString());
+
+      const sorting = first(filters.sorting) || { id: 'updatedAt', desc: true };
+      params.append('sortBy', sorting.id);
+      params.append('sortOrder', sorting.desc ? 'desc' : 'asc');
+      if (filters.search && filters.search.trim().length > 0) {
+        params.append('search', filters.search.trim());
       }
-      return getNAATExperiments(filters) as Promise<PaginatedResponse<Experiment>>;
+
+      if (type === 'LFA') {
+        return getLFAExperiments(params) as Promise<PaginatedResponse<Experiment>>;
+      }
+      return getNAATExperiments(params) as Promise<PaginatedResponse<Experiment>>;
     },
     placeholderData: keepPreviousData,
   });
-
-  // Synchronize pagination with filters
-  useEffect(() => {
-    setFilters((prev: ExperimentFilters) => ({
-      ...prev,
-      page: pagination.pageIndex + 1,
-      perPage: pagination.pageSize,
-    }));
-  }, [pagination]);
-
-  // Synchronize sorting with filters
-  useEffect(() => {
-    if (sorting.length > 0) {
-      setFilters((prev: ExperimentFilters) => ({
-        ...prev,
-        sortBy: sorting[0].id,
-        sortOrder: sorting[0].desc ? 'desc' : 'asc',
-      }));
-    } else {
-      setFilters((prev: ExperimentFilters) => ({
-        ...prev,
-        sortBy: undefined,
-        sortOrder: undefined,
-      }));
-    }
-  }, [sorting]);
-
-  const onSearchChange = (value: string) => {
-    setPagination({ pageIndex: 0, pageSize: pagination.pageSize });
-    setFilters((prev: ExperimentFilters) => ({ ...prev, search: value }));
-  };
 
   // Only show loading skeleton on initial load
   if (isLoading && !isFetching) {

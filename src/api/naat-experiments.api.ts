@@ -2,6 +2,7 @@ import axios from './axios';
 import { DispenseType } from '../utils/ExtractLiquidClass';
 import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
 import { PlateItem } from '@/types/plate.types';
+import { first, size } from 'lodash-es';
 
 export type NewNAATExperiment = {
   name: string;
@@ -69,15 +70,7 @@ export type ExperimentWithMastermix = NAATExperiment & {
   deckLayout: DeckLayout;
 };
 
-export const getNAATExperiments = async (filters: ExperimentFilters = {}) => {
-  const params = new URLSearchParams();
-
-  if (filters.page) params.append('page', filters.page.toString());
-  if (filters.perPage) params.append('perPage', filters.perPage.toString());
-  if (filters.sortBy) params.append('sortBy', filters.sortBy);
-  if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
-  if (filters.search) params.append('search', filters.search);
-
+export const getNAATExperiments = async (params: URLSearchParams) => {
   params.append('type', 'NAAT');
 
   const response = await axios.get<PaginatedResponse<NAATExperiment>>('/experiments', { params });

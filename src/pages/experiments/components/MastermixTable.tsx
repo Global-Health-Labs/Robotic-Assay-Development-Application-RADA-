@@ -70,8 +70,13 @@ export function MastermixTable({
           key={mastermix.id}
           mastermix={mastermix}
           showValidation={isSubmitted}
+          canDelete={mastermixes.length > 1}
           onUpdate={updateMastermix}
-          onDelete={() => removeMastermix(mastermix.id)}
+          onDelete={() => {
+            if (mastermixes.length > 1) {
+              removeMastermix(mastermix.id);
+            }
+          }}
           onValidationChange={handleMastermixValidation}
         />
       ))}

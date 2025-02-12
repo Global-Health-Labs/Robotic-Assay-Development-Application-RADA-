@@ -121,7 +121,7 @@ export const MultiFileUploader: React.FunctionComponent<IMultiFileUploaderProps>
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 overflow-x-hidden">
       <Button
         type="button"
         variant="outline"
@@ -146,12 +146,12 @@ export const MultiFileUploader: React.FunctionComponent<IMultiFileUploaderProps>
             <React.Fragment key={`${getFileName(doc)}-${index}`}>
               <div className="flex items-center justify-between rounded-md border bg-primary/5 px-4 py-2">
                 <div className={cn('flex w-full flex-nowrap items-center gap-2')}>
-                  <span
-                    className="flex-auto truncate font-medium text-muted-foreground"
+                  <div
+                    className="flex-1 truncate font-medium text-muted-foreground"
                     title={getFileName(doc)}
                   >
                     {getFileName(doc)}
-                  </span>
+                  </div>
                   <FilePreview files={[doc]}>
                     <button>
                       <Eye className="size-6 text-muted-foreground" />

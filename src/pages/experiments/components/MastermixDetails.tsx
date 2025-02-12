@@ -18,6 +18,7 @@ import { ReagentDetails } from './ReagentDetails';
 
 interface MastermixDetailsProps {
   mastermix: Mastermix;
+  canDelete: boolean;
   showValidation: boolean;
   onUpdate: (mastermix: Mastermix) => void;
   onDelete: () => void;
@@ -54,6 +55,7 @@ const COLUMN_HEADERS = [
 
 export function MastermixDetails({
   mastermix,
+  canDelete,
   onUpdate,
   onDelete,
   onValidationChange,
@@ -185,7 +187,11 @@ export function MastermixDetails({
                   <CopyPlus className="h-4 w-4" />
                   Copy Mastermix
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onDelete} className="gap-2 font-medium text-destructive">
+                <DropdownMenuItem
+                  onClick={onDelete}
+                  className="gap-2 font-medium text-destructive"
+                  disabled={!canDelete}
+                >
                   <Trash2 className="h-4 w-4" />
                   Delete Mastermix
                 </DropdownMenuItem>

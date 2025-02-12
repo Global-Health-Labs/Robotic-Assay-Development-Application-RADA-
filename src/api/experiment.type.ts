@@ -1,3 +1,5 @@
+import { PaginationState, SortingState } from '@tanstack/react-table';
+
 export type Experiment = {
   id: string;
   createdAt: string;
@@ -19,10 +21,8 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ExperimentFilters {
-  page?: number;
-  perPage?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  pagination: PaginationState;
+  sorting: SortingState;
   search?: string;
   type?: 'LFA' | 'NAAT';
 }

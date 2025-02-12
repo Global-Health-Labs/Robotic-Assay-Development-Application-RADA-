@@ -49,17 +49,8 @@ export const useLFAExperiment = (id: string, disabled: boolean = false) =>
     enabled: !disabled,
   });
 
-export async function getLFAExperiments(filters: ExperimentFilters = {}) {
-  const params = new URLSearchParams();
-
-  if (filters.page) params.append('page', filters.page.toString());
-  if (filters.perPage) params.append('perPage', filters.perPage.toString());
-  if (filters.sortBy) params.append('sortBy', filters.sortBy);
-  if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
-  if (filters.search) params.append('search', filters.search);
-
+export async function getLFAExperiments(params: URLSearchParams) {
   params.append('type', 'LFA');
-
   const { data } = await axios.get<PaginatedResponse<LFAExperimentWithDeckLayout>>('/experiments', {
     params,
   });
