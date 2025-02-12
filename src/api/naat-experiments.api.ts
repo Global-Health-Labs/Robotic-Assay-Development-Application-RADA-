@@ -1,8 +1,7 @@
-import axios from './axios';
-import { DispenseType } from '../utils/ExtractLiquidClass';
-import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
+import { Experiment, PaginatedResponse } from '@/api/experiment.type';
 import { PlateItem } from '@/types/plate.types';
-import { first, size } from 'lodash-es';
+import { DispenseType } from '../utils/ExtractLiquidClass';
+import axios from './axios';
 
 export type NewNAATExperiment = {
   name: string;

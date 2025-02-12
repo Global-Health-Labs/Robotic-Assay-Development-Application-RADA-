@@ -1,4 +1,4 @@
-import { Experiment, ExperimentFilters, PaginatedResponse } from '@/api/experiment.type';
+import { Experiment, PaginatedResponse } from '@/api/experiment.type';
 import { DeckLayout } from '@/types/lfa.types';
 import { useQuery } from '@tanstack/react-query';
 import axios from './axios';
