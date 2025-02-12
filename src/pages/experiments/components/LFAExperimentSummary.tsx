@@ -102,7 +102,7 @@ const LFAExperimentSummary: React.FC<{ experiment: LFAExperimentWithDeckLayout }
           <CardTitle>Experiment Files</CardTitle>
         </CardHeader>
         <CardContent>
-          <ExperimentFiles experimentId={experiment.id} experimentType="NAAT" />
+          <ExperimentFiles experimentId={experiment.id} experimentType="LFA" />
         </CardContent>
       </Card>
     </div>
