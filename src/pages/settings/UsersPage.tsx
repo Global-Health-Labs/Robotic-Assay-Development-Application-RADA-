@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Edit2, Search, UserCheck, UserX, X } from 'lucide-react';
+import { Check, Edit2, Search, Send, UserCheck, UserX, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AddUserDialog } from './components/AddUserDialog';
@@ -32,6 +32,7 @@ interface User {
   role: string;
   role_updated_at: string;
   status: 'active' | 'disabled';
+  confirmed: boolean;
 }
 
 type EditState = {
@@ -92,6 +93,19 @@ export default function UsersPage() {
     },
   });
 
+  const resendInvitationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await axios.post(`/users/${id}/resend-invitation`);
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success('Invitation resent successfully');
+    },
+    onError: () => {
+      toast.error('Failed to resend invitation');
+    },
+  });
+
   const handleEdit = (user: User) => {
     if (editState?.id === user.id) {
       setEditState(null);
@@ -127,6 +141,10 @@ export default function UsersPage() {
   const handleToggleStatus = (user: User) => {
     const newStatus = user.status === 'active' ? 'disabled' : 'active';
     toggleStatusMutation.mutate({ id: user.id, status: newStatus });
+  };
+
+  const handleResendInvitation = (userId: string) => {
+    resendInvitationMutation.mutate(userId);
   };
 
   if (currentUserRole !== 'admin') {
@@ -269,21 +287,33 @@ export default function UsersPage() {
                           <Edit2 className="h-4 w-4" />
                         </Button>
                         {currentUserId !== user.id && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              user.status === 'active' ? 'text-destructive' : 'text-primary'
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={cn(
+                                user.status === 'active' ? 'text-destructive' : 'text-primary'
+                              )}
+                              onClick={() => handleToggleStatus(user)}
+                              title={user.status === 'active' ? 'Disable user' : 'Enable user'}
+                            >
+                              {user.status === 'active' ? (
+                                <UserX className="h-4 w-4" />
+                              ) : (
+                                <UserCheck className="h-4 w-4" />
+                              )}
+                            </Button>
+                            {user.status === 'active' && !user.confirmed && (
+                              <Button
+                                variant="ghost"
+                                onClick={() => handleResendInvitation(user.id)}
+                                className="text-primary"
+                                title="Resend invitation"
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
                             )}
-                            onClick={() => handleToggleStatus(user)}
-                            title={user.status === 'active' ? 'Disable user' : 'Enable user'}
-                          >
-                            {user.status === 'active' ? (
-                              <UserX className="h-4 w-4" />
-                            ) : (
-                              <UserCheck className="h-4 w-4" />
-                            )}
-                          </Button>
+                          </>
                         )}
                       </>
                     )}
