@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { DeckLayoutPreview } from '@/pages/experiments/components/DeckLayoutPreview';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +29,7 @@ import { values } from 'lodash-es';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
+import { useAuth } from '@/context/AuthContext';
 
 const formSchema = z
   .object({
@@ -62,6 +64,7 @@ const formSchema = z
     pcrPlateSize: z.string({
       required_error: 'PCR plate size is required',
     }),
+    useAsPreset: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     const totalVolume =
@@ -97,6 +100,7 @@ const getFormDefaultValues = (experiment?: NAATExperiment): FormValues => {
     return {
       ...experiment,
       pcrPlateSize: experiment.pcrPlateSize.toString(),
+      useAsPreset: !!experiment.useAsPreset,
     };
   }
   return {
@@ -109,6 +113,7 @@ const getFormDefaultValues = (experiment?: NAATExperiment): FormValues => {
     /* eslint-enable @typescript-eslint/no-explicit-any */
     pcrPlateSize: PCR_PLATE_SIZES[0],
     deckLayoutId: '',
+    useAsPreset: false,
   };
 };
 
@@ -120,6 +125,7 @@ export function NAATExperimentForm({
   mode,
 }: ExperimentFormProps) {
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const { role } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -161,7 +167,7 @@ export function NAATExperimentForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="name"
@@ -418,6 +424,26 @@ export function NAATExperimentForm({
             </FormItem>
           )}
         />
+
+        {role === 'admin' && (
+          <FormField
+            control={form.control}
+            name="useAsPreset"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Use as Preset</FormLabel>
+                  <FormDescription>
+                    Make this experiment available as a preset for other users
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={onCancel}>

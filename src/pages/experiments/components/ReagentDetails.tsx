@@ -13,26 +13,11 @@ import { LiquidType } from '@/hooks/useLiquidTypes';
 import { VolumeUnit } from '@/hooks/useVolumeUnits';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { isNumber } from 'lodash-es';
 import { CopyPlus, Trash2Icon } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-
-const CONCENTRATION_VALIDATION_MESSAGE =
-  'Final concentration must be less than or equal to stock concentration';
-
-const validateConcentration = ({
-  finalConcentration,
-  stockConcentration,
-}: {
-  finalConcentration: number;
-  stockConcentration: number;
-}) => {
-  if (finalConcentration && stockConcentration) {
-    return finalConcentration <= stockConcentration;
-  }
-  return true;
-};
 
 const reagentSchema = z
   .object({
@@ -46,31 +31,64 @@ const reagentSchema = z
         required_error: 'Required',
       })
       .min(1, 'Required'),
-    finalConcentration: z.coerce
-      .number({
-        required_error: 'Required',
-        invalid_type_error: 'Must be greater than 0',
-      })
-      .min(0.00001, 'Must be greater than 0')
-      .max(1000, 'Must be less than 1000')
-      .refine((val) => !isNaN(val), 'Required'),
-    stockConcentration: z.coerce
-      .number({
-        required_error: 'Required',
-        invalid_type_error: 'Must be greater than 0',
-      })
-      .min(0.00001, 'Must be greater than 0')
-      .max(1000, 'Must be less than 1000')
-      .refine((val) => !isNaN(val), 'Required'),
+    finalConcentration: z.coerce.number({
+      required_error: 'Required',
+      invalid_type_error: 'Must be a valid number',
+    }),
+    stockConcentration: z.coerce.number({
+      required_error: 'Required',
+      invalid_type_error: 'Must be a valid number',
+    }),
     liquidType: z
       .string({
         required_error: 'Required',
       })
       .min(1, 'Required'),
   })
-  .refine(validateConcentration, {
-    message: CONCENTRATION_VALIDATION_MESSAGE,
-    path: ['finalConcentration'],
+  .superRefine((val, ctx) => {
+    const isWater = val.liquidType === 'water';
+
+    if (isWater || !isNumber(val.finalConcentration) || !isNumber(val.stockConcentration)) {
+      return true;
+    }
+
+    if (val.finalConcentration <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Must be greater than 0',
+        path: ['finalConcentration'],
+      });
+    } else if (val.finalConcentration > 1000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Must be less than 1000',
+        path: ['finalConcentration'],
+      });
+    }
+
+    if (val.stockConcentration <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Must be greater than 0',
+        path: ['stockConcentration'],
+      });
+    } else if (val.stockConcentration > 1000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Must be less than 1000',
+        path: ['stockConcentration'],
+      });
+    }
+
+    if (val.finalConcentration > val.stockConcentration) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Final concentration must be less than or equal to stock concentration',
+        path: ['finalConcentration'],
+      });
+    }
+
+    return true;
   });
 
 type ReagentFormValues = z.infer<typeof reagentSchema>;
@@ -114,6 +132,17 @@ export function ReagentDetails({
     });
   }, []);
 
+  const liquidType = form.watch('liquidType');
+  const isWater = liquidType === 'water';
+
+  useEffect(() => {
+    if (isWater) {
+      form.setValue('finalConcentration', 0);
+      form.setValue('stockConcentration', 0);
+      form.setValue('unit', 'X');
+    }
+  }, [isWater]);
+
   // Watch form validation state and bubble up changes
   useEffect(() => {
     const subscription = form.watch((values, info) => {
@@ -134,7 +163,7 @@ export function ReagentDetails({
 
   return (
     <Form {...form}>
-      <div className="grid grid-cols-[2fr,1fr,1fr,1fr,1fr,auto] items-center gap-2">
+      <div className="grid grid-cols-[2fr,1fr,1fr,1fr,1fr,auto] gap-2">
         <FormField
           control={form.control}
           name="source"
@@ -153,7 +182,7 @@ export function ReagentDetails({
           name="unit"
           render={({ field }) => (
             <FormItem>
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={field.onChange} disabled={isWater}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Unit" />
@@ -178,7 +207,7 @@ export function ReagentDetails({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input {...field} placeholder="" />
+                <Input {...field} placeholder="" disabled={isWater} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -191,7 +220,7 @@ export function ReagentDetails({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input {...field} placeholder="" />
+                <Input {...field} placeholder="" disabled={isWater} />
               </FormControl>
               <FormMessage />
             </FormItem>

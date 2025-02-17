@@ -1,9 +1,19 @@
+import { ExperimentFilters } from '@/api/experiment.type';
+import { getNAATPresets } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Experiments from '@/pages/experiments/components/Experiments';
-import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ExperimentFilters } from '@/api/experiment.type';
+import { Link } from 'react-router-dom';
 
 type TabType = 'NAAT' | 'LFA';
 
@@ -11,6 +21,11 @@ export default function ExperimentsPage() {
   const [tabStates, setTabStates] = useState<{ NAAT: ExperimentFilters; LFA: ExperimentFilters }>({
     NAAT: { pagination: { pageIndex: 0, pageSize: 10 }, sorting: [], search: '' },
     LFA: { pagination: { pageIndex: 0, pageSize: 10 }, sorting: [], search: '' },
+  });
+
+  const { data: presets } = useQuery({
+    queryKey: ['naat-presets'],
+    queryFn: getNAATPresets,
   });
 
   const handleFilterChange = (tab: TabType, newFilters: Partial<ExperimentFilters>) => {
@@ -32,12 +47,35 @@ export default function ExperimentsPage() {
             <p className="text-muted-foreground">Manage and track your experimental plans</p>
           </div>
           <div className="ml-auto flex gap-4">
-            <Link to="/experiments/lfa/new">
-              <Button variant="outline">New LFA Experiment</Button>
-            </Link>
-            <Link to="/experiments/naat/new">
-              <Button variant="outline">New NAAT Experiment</Button>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">New Experiment</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuLabel className="text-muted-foreground">
+                  NAAT Experiments
+                </DropdownMenuLabel>
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/experiments/naat/new">Custom NAAT</Link>
+                </DropdownMenuItem>
+                {presets && presets.length > 0 && (
+                  <>
+                    {presets.map((preset) => (
+                      <DropdownMenuItem key={preset.id} asChild className="cursor-pointer">
+                        <Link to={`/experiments/naat/new?preset=${preset.id}`}>{preset.name}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-muted-foreground">
+                  LFA Experiments
+                </DropdownMenuLabel>
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/experiments/lfa/new">Custom LFA</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

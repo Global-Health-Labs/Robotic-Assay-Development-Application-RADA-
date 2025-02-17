@@ -1,7 +1,7 @@
 import {
   createNAATExperiment,
-  NAATExperiment,
   getNAATExperiment,
+  NAATExperiment,
   NewNAATExperiment,
   updateNAATExperiment,
 } from '@/api/naat-experiments.api';
@@ -10,20 +10,30 @@ import { NAATExperimentForm } from '@/pages/experiments/components/NAATExperimen
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isEmpty } from 'lodash-es';
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function NAATExperimentDetailsPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const presetId = searchParams.get('preset');
   const queryClient = useQueryClient();
   const isEditMode = !isEmpty(id);
 
-  const { data: experimentData, isLoading } = useQuery({
+  const { data: experimentData, isLoading: experimentLoading } = useQuery({
     queryKey: ['experiment', id],
     queryFn: () => getNAATExperiment(id!),
     enabled: isEditMode,
   });
+
+  const { data: presetData, isLoading: presetLoading } = useQuery({
+    queryKey: ['experiment', presetId],
+    queryFn: () => getNAATExperiment(presetId!),
+    enabled: !isEditMode && !isEmpty(presetId),
+  });
+
+  const isLoading = experimentLoading || presetLoading;
 
   useEffect(() => {
     if (!isLoading && isEditMode && !experimentData) {
@@ -33,36 +43,27 @@ export default function NAATExperimentDetailsPage() {
 
   const experimentMutation = useMutation({
     mutationFn: (data: NAATExperiment | NewNAATExperiment) => {
+      const payload = {
+        ...data,
+        useAsPreset: data.useAsPreset,
+      };
+
+      if (data.useAsPreset) {
+        queryClient.invalidateQueries({ queryKey: ['presets'] });
+      }
+
       if (isEditMode) {
-        return updateNAATExperiment(id!, {
-          name: data.name,
-          numOfSampleConcentrations: data.numOfSampleConcentrations,
-          numOfTechnicalReplicates: data.numOfTechnicalReplicates,
-          mastermixVolumePerReaction: data.mastermixVolumePerReaction,
-          sampleVolumePerReaction: data.sampleVolumePerReaction,
-          pcrPlateSize: data.pcrPlateSize,
-          deckLayoutId: data.deckLayoutId,
-        });
+        return updateNAATExperiment(id!, payload);
       } else {
-        return createNAATExperiment({
-          name: data.name,
-          numOfSampleConcentrations: data.numOfSampleConcentrations,
-          numOfTechnicalReplicates: data.numOfTechnicalReplicates,
-          mastermixVolumePerReaction: data.mastermixVolumePerReaction,
-          sampleVolumePerReaction: data.sampleVolumePerReaction,
-          pcrPlateSize: data.pcrPlateSize,
-          deckLayoutId: data.deckLayoutId,
-        });
+        return createNAATExperiment(payload, presetId);
       }
     },
-    onSuccess: (experiment) => {
+    onSuccess: (experiment: NAATExperiment) => {
       toast.success(
         isEditMode ? 'Experiment updated successfully.' : 'Experiment created successfully.'
       );
       queryClient.invalidateQueries({ queryKey: ['experiments'] });
-      if (isEditMode) {
-        queryClient.invalidateQueries({ queryKey: ['experiment', experiment.id] });
-      }
+      queryClient.invalidateQueries({ queryKey: ['experiment', experiment.id] });
       navigate(`/experiments/naat/${experiment.id}/mastermix`);
     },
     onError: () => {
@@ -79,32 +80,44 @@ export default function NAATExperimentDetailsPage() {
       experimentMutation.mutate(data);
     } else if (isEditMode) {
       navigate(`/experiments/naat/${id}/mastermix`);
+    } else {
+      navigate('/experiments');
     }
   };
 
-  if (isEditMode && isLoading) {
+  if (isLoading) {
     return <PageLoading />;
   }
 
+  const defaultValues = isEditMode
+    ? experimentData
+    : presetData
+      ? { ...presetData, name: '', useAsPreset: false }
+      : undefined;
+
   return (
     <div className="max-w-2xl py-4 md:py-10">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">
-          {isEditMode ? 'Edit Experiment' : 'Create New Experiment'}
-        </h2>
-        <p className="text-muted-foreground">
-          {isEditMode
-            ? 'Modify the details of your experiment'
-            : 'Enter the details for your new experimental plan'}
-        </p>
+      <div className="flex items-center justify-between space-y-2">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {isEditMode ? 'Edit NAAT Experiment' : 'New NAAT Experiment'}
+          </h2>
+          <p className="text-muted-foreground">
+            {isEditMode
+              ? 'Update your NAAT experiment details'
+              : presetId
+                ? 'Create a new experiment from preset'
+                : 'Create a new NAAT experiment from scratch'}
+          </p>
+        </div>
       </div>
 
       <NAATExperimentForm
-        mode={isEditMode ? 'edit' : 'create'}
-        defaultValues={experimentData}
-        onSubmit={(data, isDirty) => handleSubmit(data, isDirty)}
+        defaultValues={defaultValues}
+        onSubmit={handleSubmit}
         isSubmitting={experimentMutation.isPending}
         onCancel={() => navigate('/experiments')}
+        mode={isEditMode ? 'edit' : 'create'}
       />
     </div>
   );

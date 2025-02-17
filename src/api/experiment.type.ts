@@ -8,6 +8,7 @@ export type Experiment = {
   ownerFullName: string;
   name: string;
   type: 'LFA' | 'NAAT';
+  useAsPreset?: boolean;
 };
 
 export interface PaginatedResponse<T> {

@@ -87,8 +87,10 @@ export default function MastermixPage() {
   };
 
   const handleSave = () => {
-    if (localMastermixes) {
+    if (localMastermixes && isDirty) {
       updateMastermixMutation.mutate(localMastermixes);
+    } else {
+      navigate(`/experiments/naat/${id}/export`);
     }
   };
 
@@ -147,10 +149,7 @@ export default function MastermixPage() {
           <Button variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!isValid || !isDirty || updateMastermixMutation.isPending}
-          >
+          <Button onClick={handleSave} disabled={!isValid || updateMastermixMutation.isPending}>
             {updateMastermixMutation.isPending ? 'Saving...' : 'Save & Continue'}
           </Button>
         </div>

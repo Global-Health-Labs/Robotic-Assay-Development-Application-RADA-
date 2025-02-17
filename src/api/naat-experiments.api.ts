@@ -11,6 +11,7 @@ export type NewNAATExperiment = {
   sampleVolumePerReaction: number;
   pcrPlateSize: number;
   deckLayoutId: string;
+  useAsPreset?: boolean;
 };
 
 export type NAATExperiment = {
@@ -84,8 +85,8 @@ export const getNAATExperiments = async (params: URLSearchParams) => {
 export const getNAATExperiment = (id: string) =>
   axios.get<ExperimentWithMastermix>(`/experiments/naat/${id}`).then((res) => res.data);
 
-export const createNAATExperiment = (data: NewNAATExperiment) =>
-  axios.post<NAATExperiment>('/experiments/naat', data).then((res) => res.data);
+export const createNAATExperiment = (data: NewNAATExperiment, presetId: string | null) =>
+  axios.post<NAATExperiment>('/experiments/naat', { ...data, presetId }).then((res) => res.data);
 
 export const updateNAATExperiment = (id: string, data: Partial<NAATExperiment>) =>
   axios.put<NAATExperiment>(`/experiments/naat/${id}`, data).then((res) => res.data);
@@ -107,3 +108,8 @@ export const cloneNAATExperiment = async (experimentId: string) => {
   const response = await axios.post<NAATExperiment>(`/experiments/naat/${experimentId}/clone`);
   return response.data;
 };
+
+export async function getNAATPresets(): Promise<NAATExperiment[]> {
+  const response = await axios.get('/experiments/naat/presets');
+  return response.data;
+}

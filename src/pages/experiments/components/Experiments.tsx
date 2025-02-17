@@ -9,9 +9,10 @@ import { PageLoading } from '@/components/ui/page-loading';
 import ExperimentActions from '@/pages/experiments/components/ExperimentActions';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
-import { Link } from 'react-router-dom';
-import { useCallback, useEffect, useState } from 'react';
 import { first } from 'lodash-es';
+import { Star } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 interface ExperimentsProps {
   type: 'NAAT' | 'LFA';
@@ -27,12 +28,19 @@ export const columns: ColumnDef<Experiment>[] = [
     cell: ({ row }) => {
       const experiment = row.original;
       return (
-        <Link
-          to={`/experiments/${experiment.type.toLowerCase()}/${experiment.id}`}
-          className="text-blue-600 hover:text-blue-800 hover:underline"
-        >
-          {experiment.name}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to={`/experiments/${experiment.type.toLowerCase()}/${experiment.id}`}
+            className="text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            {experiment.name}
+          </Link>
+          {experiment.useAsPreset && (
+            <span title="This experiment is used as a preset">
+              <Star className="size-4 fill-amber-400 text-amber-500" />
+            </span>
+          )}
+        </div>
       );
     },
   },
