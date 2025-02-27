@@ -1,5 +1,5 @@
 import { Experiment, PaginatedResponse } from '@/api/experiment.type';
-import { DeckLayout } from '@/types/lfa.types';
+import { LFADeckLayout } from '@/types/lfa.types';
 import { useQuery } from '@tanstack/react-query';
 import axios from './axios';
 
@@ -18,6 +18,7 @@ export type NewLFAExperiment = {
   numReplicates: number;
   deckLayoutId: string;
   type: 'LFA';
+  useAsPreset?: boolean;
 };
 
 export type LFAExperiment = {
@@ -30,7 +31,7 @@ export type LFAExperiment = {
   NewLFAExperiment;
 
 export type LFAExperimentWithDeckLayout = LFAExperiment & {
-  deckLayout: DeckLayout;
+  deckLayout: LFADeckLayout;
 };
 
 export type LFARoboInstruction = {
@@ -67,8 +68,8 @@ export async function getLFAExperiment(id: string) {
   return data;
 }
 
-export async function createLFAExperiment(data: NewLFAExperiment) {
-  const response = await axios.post<LFAExperiment>('/experiments/lfa', data);
+export async function createLFAExperiment(data: NewLFAExperiment, presetId: string | null) {
+  const response = await axios.post<LFAExperiment>('/experiments/lfa', { ...data, presetId });
   return response.data;
 }
 
@@ -106,6 +107,11 @@ export async function getLFAInstructionData(id: string) {
   return response.data.map((row) => {
     return { ...row, isDone: false };
   });
+}
+
+export async function getLFAPresets(): Promise<LFAExperiment[]> {
+  const response = await axios.get('/experiments/lfa/presets');
+  return response.data;
 }
 
 export const cloneLFAExperiment = async (experimentId: string) => {

@@ -1,7 +1,8 @@
-import { DeckLayout } from '@/api/naat-experiments.api';
+import { NAATDeckLayout } from '@/api/naat-experiments.api';
+import { LFADeckLayout } from '@/types/lfa.types';
 
 interface DeckLayoutPreviewProps {
-  layout: DeckLayout;
+  layout: NAATDeckLayout | LFADeckLayout;
 }
 
 export function DeckLayoutPreview({ layout }: DeckLayoutPreviewProps) {
@@ -13,7 +14,7 @@ export function DeckLayoutPreview({ layout }: DeckLayoutPreviewProps) {
             key={plate.id}
             className="flex items-center justify-center truncate rounded-md border bg-muted p-2 text-xs sm:text-sm"
           >
-            {plate.id}
+            {plate.isEmpty ? 'Empty' : plate.name}
           </div>
         ))}
       </div>

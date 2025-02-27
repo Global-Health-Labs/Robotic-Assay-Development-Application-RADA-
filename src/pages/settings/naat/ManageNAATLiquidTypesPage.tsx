@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { LiquidType, useLiquidTypes } from '@/hooks/useLiquidTypes';
+import { LiquidType, useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
@@ -27,7 +27,7 @@ type EditState = {
 
 export default function ManageNAATLiquidTypesPage() {
   const queryClient = useQueryClient();
-  const { data: liquidTypes = [], isLoading } = useLiquidTypes();
+  const { data: liquidTypes = [], isLoading } = useNAATLiquidTypes();
   const [editState, setEditState] = useState<EditState | null>(null);
 
   const addMutation = useMutation({
@@ -299,10 +299,7 @@ export default function ManageNAATLiquidTypesPage() {
                     }
                   />
                 ) : (
-                  <Checkbox
-                    checked={type.needsTipWashing}
-                    disabled
-                  />
+                  <Checkbox checked={type.needsTipWashing} disabled />
                 )}
               </TableCell>
               <TableCell>

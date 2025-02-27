@@ -9,7 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { PageLoading } from '@/components/ui/page-loading';
 import { Separator } from '@/components/ui/separator';
-import { useLiquidTypes } from '@/hooks/useLiquidTypes';
+import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 import { cn } from '@/lib/utils';
 import { CopyPlus, Menu, PlusCircle, Trash2 } from 'lucide-react';
@@ -65,7 +65,7 @@ export function MastermixDetails({
   const [reagentValidation, setReagentValidation] = React.useState<Record<string, boolean>>({});
   const [nameValid, setNameValid] = React.useState(!!mastermix.name);
 
-  const { data: liquidTypes, isLoading: liquidTypesLoading } = useLiquidTypes();
+  const { data: liquidTypes, isLoading: liquidTypesLoading } = useNAATLiquidTypes();
   const { data: volumeUnits, isLoading: volumeUnitsLoading } = useVolumeUnits();
 
   // Update overall validation status whenever a reagent's validation changes

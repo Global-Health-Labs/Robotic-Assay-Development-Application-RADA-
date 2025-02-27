@@ -17,7 +17,7 @@ export type AssayPlateConfig = {
   locations: PlateLocation[];
 };
 
-export type DeckLayout = {
+export type LFADeckLayout = {
   id: string;
   name: string;
   description?: string;

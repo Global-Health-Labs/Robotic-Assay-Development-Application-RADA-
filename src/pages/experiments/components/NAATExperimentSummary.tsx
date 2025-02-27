@@ -2,10 +2,20 @@ import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dayjs from 'dayjs';
 import { ExperimentFiles } from './ExperimentFiles';
+import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 
 const NAATExperimentSummary: React.FC<{ experiment: ExperimentWithMastermix }> = ({
   experiment,
 }) => {
+  const { data: liquidTypes } = useNAATLiquidTypes();
+
+  const getLiquidTypeName = (liquidType: string) => {
+    if (!liquidTypes) {
+      return liquidType;
+    }
+    return liquidTypes.find((lt) => lt.value === liquidType)?.displayName || 'N/A';
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -97,14 +107,14 @@ const NAATExperimentSummary: React.FC<{ experiment: ExperimentWithMastermix }> =
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="text-sm">
                       {mastermix.reagents?.map((reagent) => (
                         <tr key={reagent.id} className="border-b last:border-0">
                           <td className="p-2">{reagent.source}</td>
                           <td className="p-2">{reagent.unit}</td>
                           <td className="p-2">{reagent.finalConcentration}</td>
                           <td className="p-2">{reagent.stockConcentration}</td>
-                          <td className="p-2">{reagent.liquidType}</td>
+                          <td className="p-2">{getLiquidTypeName(reagent.liquidType)}</td>
                         </tr>
                       ))}
                     </tbody>

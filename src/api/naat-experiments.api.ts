@@ -32,7 +32,7 @@ export interface Reagent {
   tipWashing?: 'Yes' | 'No';
 }
 
-export type DeckLayout = {
+export type NAATDeckLayout = {
   id: string;
   name: string;
   description: string;
@@ -67,7 +67,7 @@ export interface ExperimentMastermix {
 
 export type ExperimentWithMastermix = NAATExperiment & {
   mastermixes: Mastermix[];
-  deckLayout: DeckLayout;
+  deckLayout: NAATDeckLayout;
 };
 
 export const getNAATExperiments = async (params: URLSearchParams) => {

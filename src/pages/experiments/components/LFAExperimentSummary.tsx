@@ -2,11 +2,20 @@ import { LFAExperimentWithDeckLayout } from '@/api/lfa-experiments.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dayjs from 'dayjs';
 import { ExperimentFiles } from './ExperimentFiles';
+import { useLFALiquidTypes } from '@/hooks/useLFALiquidTypes';
 
 const LFAExperimentSummary: React.FC<{ experiment: LFAExperimentWithDeckLayout }> = ({
   experiment,
 }) => {
   const hasSteps = experiment.steps && experiment.steps.length > 0;
+  const { data: liquidTypes } = useLFALiquidTypes();
+
+  const getLiquidTypeName = (liquidType: string) => {
+    if (!liquidTypes) {
+      return liquidType;
+    }
+    return liquidTypes.find((lt) => lt.value === liquidType)?.displayName || 'N/A';
+  };
 
   return (
     <div className="space-y-6">
@@ -75,12 +84,12 @@ const LFAExperimentSummary: React.FC<{ experiment: LFAExperimentWithDeckLayout }
                       </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="text-sm">
                     {experiment.steps?.map((step) => (
                       <tr key={step.step} className="border-b last:border-0">
                         <td className="p-2">{step.step}</td>
                         <td className="p-2">{step.volume}</td>
-                        <td className="p-2">{step.liquidClass}</td>
+                        <td className="p-2">{getLiquidTypeName(step.liquidClass)}</td>
                         <td className="p-2">{step.time}</td>
                         <td className="p-2">{`DX: ${step.dx}, DZ: ${step.dz}`}</td>
                         <td className="p-2">{step.source}</td>

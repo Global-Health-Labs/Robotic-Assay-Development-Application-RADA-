@@ -6,7 +6,7 @@ import {
 } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
 import { PageLoading } from '@/components/ui/page-loading';
-import { useLiquidTypes } from '@/hooks/useLiquidTypes';
+import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 import { MastermixTable } from '@/pages/experiments/components/MastermixTable';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +31,7 @@ export default function MastermixPage() {
     enabled: !!id,
   });
 
-  const { data: liquidTypes, isLoading: liquidTypesLoading } = useLiquidTypes();
+  const { data: liquidTypes, isLoading: liquidTypesLoading } = useNAATLiquidTypes();
   const { data: volumeUnits, isLoading: volumeUnitsLoading } = useVolumeUnits();
 
   // Local state for mastermix data
@@ -56,6 +56,7 @@ export default function MastermixPage() {
     onSuccess: () => {
       toast.success('Mastermix updated successfully');
       queryClient.invalidateQueries({ queryKey: ['mastermix', id] });
+      queryClient.invalidateQueries({ queryKey: ['experiment', id] });
       setIsDirty(false);
       setIsSubmitted(true);
       navigate(`/experiments/naat/${id}/export`);

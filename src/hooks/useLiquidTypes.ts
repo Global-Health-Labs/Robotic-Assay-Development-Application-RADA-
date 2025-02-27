@@ -16,7 +16,7 @@ const fetchLiquidTypes = async (): Promise<LiquidType[]> => {
   return data;
 };
 
-export function useLiquidTypes() {
+export function useNAATLiquidTypes() {
   return useQuery({
     queryKey: ['naat-liquid-types'],
     queryFn: fetchLiquidTypes,

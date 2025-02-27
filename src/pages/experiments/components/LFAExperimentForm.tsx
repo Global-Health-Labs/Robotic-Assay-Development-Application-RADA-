@@ -1,13 +1,8 @@
+import axios from '@/api/axios';
 import { LFAExperiment, NewLFAExperiment } from '@/api/lfa-experiments.api';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -18,17 +13,23 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
-import { DeckLayout } from '@/types/lfa.types';
+import { LFADeckLayout } from '@/types/lfa.types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import axios from '@/api/axios';
 import { values } from 'lodash-es';
-import { Check, ChevronsUpDown } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { DeckLayoutPreview } from './DeckLayoutPreview';
 
 const formSchema = z.object({
   name: z
@@ -46,6 +47,7 @@ const formSchema = z.object({
     .min(1, 'Number of technical replicates must be 1 or greater')
     .max(50, 'Number of technical replicates cannot exceed 50')
     .int('Number of technical replicates must be a whole number'),
+  useAsPreset: z.boolean().default(false),
 });
 
 export type FormValues = z.infer<typeof formSchema>;
@@ -64,6 +66,7 @@ function getFormDefaultValues(experiment?: LFAExperiment): FormValues {
       name: '',
       deckLayoutId: '',
       numReplicates: 1,
+      useAsPreset: false,
     };
   }
 
@@ -71,6 +74,7 @@ function getFormDefaultValues(experiment?: LFAExperiment): FormValues {
     name: experiment.name,
     deckLayoutId: experiment.deckLayoutId,
     numReplicates: experiment.numReplicates,
+    useAsPreset: experiment.useAsPreset || false,
   };
 }
 
@@ -82,7 +86,8 @@ export function LFAExperimentForm({
   mode,
 }: LFAExperimentFormProps) {
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+  const [previewLayout, setPreviewLayout] = useState<LFADeckLayout | null>(null);
+  const { role } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -90,10 +95,10 @@ export function LFAExperimentForm({
     mode: 'onChange',
   });
 
-  const { data: deckLayouts = [], isLoading: isLoadingDeckLayouts } = useQuery<DeckLayout[]>({
-    queryKey: ['lfaDeckLayouts'],
+  const { data: deckLayouts = [] } = useQuery({
+    queryKey: ['lfa-deck-layouts'],
     queryFn: async () => {
-      const response = await axios.get('/experiments/lfa/deck-layouts');
+      const response = await axios.get<LFADeckLayout[]>('/settings/lfa/deck-layouts');
       return response.data;
     },
   });
@@ -139,53 +144,41 @@ export function LFAExperimentForm({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Deck Layout</FormLabel>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={open}
-                      className={cn('justify-between', !field.value && 'text-muted-foreground')}
-                    >
-                      {isLoadingDeckLayouts
-                        ? 'Loading configurations...'
-                        : field.value
-                          ? deckLayouts.find((layout) => layout.id === field.value)?.name
-                          : 'Select deck layout'}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="p-0">
-                  <Command>
-                    <CommandInput placeholder="Search deck layouts..." />
-                    <CommandList>
-                      <CommandEmpty>No deck layouts found.</CommandEmpty>
-                      <CommandGroup>
-                        {values(deckLayouts).map((layout) => (
-                          <CommandItem
-                            value={layout.name}
-                            key={layout.id}
-                            onSelect={() => {
-                              form.setValue('deckLayoutId', layout.id);
-                              setOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                layout.id === field.value ? 'opacity-100' : 'opacity-0'
-                              )}
-                            />
-                            {layout.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a deck layout" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {deckLayouts.map((layout) => (
+                        <SelectItem key={layout.id} value={layout.id}>
+                          {layout.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="ml-auto"
+                  onClick={() => {
+                    const layout = deckLayouts.find((l) => l.id === field.value);
+                    if (layout) {
+                      setPreviewLayout(layout);
+                    }
+                  }}
+                >
+                  Preview
+                </Button>
+              </div>
               <FormDescription
                 className={cn(
                   'transition-colors duration-200',
@@ -230,6 +223,26 @@ export function LFAExperimentForm({
           )}
         />
 
+        {role === 'admin' && (
+          <FormField
+            control={form.control}
+            name="useAsPreset"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Use as Preset</FormLabel>
+                  <FormDescription>
+                    Make this experiment available as a preset for other users
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+        )}
+
         <div className="flex justify-end gap-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
@@ -239,6 +252,18 @@ export function LFAExperimentForm({
           </Button>
         </div>
       </form>
+
+      <Dialog
+        open={previewLayout !== null}
+        onOpenChange={(open) => !open && setPreviewLayout(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{previewLayout?.name}</DialogTitle>
+          </DialogHeader>
+          {previewLayout && <DeckLayoutPreview layout={previewLayout} />}
+        </DialogContent>
+      </Dialog>
     </Form>
   );
 }

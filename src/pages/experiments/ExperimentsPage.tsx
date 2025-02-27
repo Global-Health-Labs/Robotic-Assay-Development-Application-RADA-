@@ -1,4 +1,5 @@
 import { ExperimentFilters } from '@/api/experiment.type';
+import { getLFAPresets } from '@/api/lfa-experiments.api';
 import { getNAATPresets } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,13 +20,18 @@ type TabType = 'NAAT' | 'LFA';
 
 export default function ExperimentsPage() {
   const [tabStates, setTabStates] = useState<{ NAAT: ExperimentFilters; LFA: ExperimentFilters }>({
-    NAAT: { pagination: { pageIndex: 0, pageSize: 10 }, sorting: [], search: '' },
-    LFA: { pagination: { pageIndex: 0, pageSize: 10 }, sorting: [], search: '' },
+    NAAT: { pagination: { pageIndex: 0, pageSize: 10 }, sorting: [], search: '', type: 'NAAT' },
+    LFA: { pagination: { pageIndex: 0, pageSize: 10 }, sorting: [], search: '', type: 'LFA' },
   });
 
-  const { data: presets } = useQuery({
+  const { data: naatPresets } = useQuery({
     queryKey: ['naat-presets'],
     queryFn: getNAATPresets,
+  });
+
+  const { data: lfaPresets } = useQuery({
+    queryKey: ['lfa-presets'],
+    queryFn: getLFAPresets,
   });
 
   const handleFilterChange = (tab: TabType, newFilters: Partial<ExperimentFilters>) => {
@@ -58,9 +64,9 @@ export default function ExperimentsPage() {
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link to="/experiments/naat/new">Custom NAAT</Link>
                 </DropdownMenuItem>
-                {presets && presets.length > 0 && (
+                {naatPresets && naatPresets.length > 0 && (
                   <>
-                    {presets.map((preset) => (
+                    {naatPresets.map((preset) => (
                       <DropdownMenuItem key={preset.id} asChild className="cursor-pointer">
                         <Link to={`/experiments/naat/new?preset=${preset.id}`}>{preset.name}</Link>
                       </DropdownMenuItem>
@@ -74,6 +80,15 @@ export default function ExperimentsPage() {
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link to="/experiments/lfa/new">Custom LFA</Link>
                 </DropdownMenuItem>
+                {lfaPresets && lfaPresets.length > 0 && (
+                  <>
+                    {lfaPresets.map((preset) => (
+                      <DropdownMenuItem key={preset.id} asChild className="cursor-pointer">
+                        <Link to={`/experiments/lfa/new?preset=${preset.id}`}>{preset.name}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

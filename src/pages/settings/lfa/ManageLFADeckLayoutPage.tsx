@@ -27,7 +27,7 @@ import {
   generatePlateName,
   generateSequenceNumber,
 } from '@/pages/settings/util/deck-layout.util';
-import { DeckLayout } from '@/types/lfa.types';
+import { LFADeckLayout } from '@/types/lfa.types';
 import { PlateItem } from '@/types/plate.types';
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext } from '@dnd-kit/sortable';
@@ -43,7 +43,7 @@ import * as z from 'zod';
 const defaultPlates: PlateItem[] = createDefaultPlates();
 
 interface LayoutEditorProps {
-  layout?: DeckLayout;
+  layout?: LFADeckLayout;
   onClose: () => void;
 }
 
@@ -75,13 +75,13 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
 
   const createMutation = useMutation({
     mutationFn: async (
-      data: Omit<DeckLayout, 'id' | 'createdAt' | 'updatedAt' | 'assayPlateConfig'>
+      data: Omit<LFADeckLayout, 'id' | 'createdAt' | 'updatedAt' | 'assayPlateConfig'>
     ) => {
       const response = await axios.post('/settings/lfa/deck-layouts', data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lfaDeckLayouts'] });
+      queryClient.invalidateQueries({ queryKey: ['lfa-deck-layouts'] });
       toast.success('Layout created successfully');
       onClose();
     },
@@ -92,12 +92,12 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: Partial<DeckLayout>) => {
+    mutationFn: async (data: Partial<LFADeckLayout>) => {
       const response = await axios.patch(`/settings/lfa/deck-layouts/${layout!.id}`, data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lfaDeckLayouts'] });
+      queryClient.invalidateQueries({ queryKey: ['lfa-deck-layouts'] });
       toast.success('Layout updated successfully');
       onClose();
     },
@@ -264,17 +264,17 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
 
 export default function ManageLFADeckLayoutPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [selectedLayout, setSelectedLayout] = useState<DeckLayout | undefined>();
+  const [selectedLayout, setSelectedLayout] = useState<LFADeckLayout | undefined>();
 
   const { data: layouts = [], isLoading } = useQuery({
-    queryKey: ['lfaDeckLayouts'],
+    queryKey: ['lfa-deck-layouts'],
     queryFn: async () => {
       const response = await axios.get('/settings/lfa/deck-layouts');
-      return response.data as DeckLayout[];
+      return response.data as LFADeckLayout[];
     },
   });
 
-  const handleEdit = (layout: DeckLayout) => {
+  const handleEdit = (layout: LFADeckLayout) => {
     setSelectedLayout(layout);
     setIsEditorOpen(true);
   };

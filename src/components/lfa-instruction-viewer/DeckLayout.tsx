@@ -1,11 +1,11 @@
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { DeckLayout } from '@/types/lfa.types';
+import { LFADeckLayout as LFADeckLayoutType } from '@/types/lfa.types';
 import { FC } from 'react';
 
 interface Props {
   selectedPlate: string;
-  deckLayout: DeckLayout;
+  deckLayout: LFADeckLayoutType;
 }
 
 export const LFADeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {

@@ -1,5 +1,5 @@
 import axios from '@/api/axios';
-import { DeckLayout, NAATExperiment, NewNAATExperiment } from '@/api/naat-experiments.api';
+import { NAATDeckLayout, NAATExperiment, NewNAATExperiment } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -156,14 +156,14 @@ export function NAATExperimentForm({
   };
 
   const { data: deckLayouts = [] } = useQuery({
-    queryKey: ['deck-layouts'],
+    queryKey: ['naat-deck-layouts'],
     queryFn: async () => {
-      const response = await axios.get<DeckLayout[]>('/settings/naat/deck-layouts');
+      const response = await axios.get<NAATDeckLayout[]>('/settings/naat/deck-layouts');
       return response.data;
     },
   });
 
-  const [previewLayout, setPreviewLayout] = useState<DeckLayout | null>(null);
+  const [previewLayout, setPreviewLayout] = useState<NAATDeckLayout | null>(null);
 
   return (
     <Form {...form}>

@@ -1,11 +1,11 @@
-import { DeckLayout } from '@/api/naat-experiments.api';
+import { NAATDeckLayout as NAATDeckLayoutType } from '@/api/naat-experiments.api';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { FC } from 'react';
 
 interface Props {
   selectedPlate: string;
-  deckLayout: DeckLayout;
+  deckLayout: NAATDeckLayoutType;
 }
 
 export const NAATDeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {
