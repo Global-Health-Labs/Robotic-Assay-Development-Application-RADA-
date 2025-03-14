@@ -17,6 +17,13 @@ const LFAExperimentSummary: React.FC<{ experiment: LFAExperimentWithDeckLayout }
     return liquidTypes.find((lt) => lt.value === liquidType)?.displayName || 'N/A';
   };
 
+  const getLocation = (dx: number, dz: number) => {
+    const location = experiment.assayPlateConfig?.locations.find(
+      (loc) => loc.dx === dx && loc.dz === dz
+    );
+    return location || { name: 'Unknown', dx: dx, dz: dz };
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -38,9 +45,14 @@ const LFAExperimentSummary: React.FC<{ experiment: LFAExperimentWithDeckLayout }
               <p>{experiment.deckLayout?.name || ''}</p>
             </div>
             <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Assay Plate Config</h3>
+              <p>{experiment.assayPlateConfig?.name || ''}</p>
+            </div>
+            <div>
               <h3 className="text-sm font-medium text-muted-foreground">Technical Replicates</h3>
               <p>{experiment.numReplicates}</p>
             </div>
+            <div />
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Created At</h3>
               <p>{dayjs(experiment.createdAt).format('MMM DD, YYYY HH:mm')}</p>
@@ -91,7 +103,7 @@ const LFAExperimentSummary: React.FC<{ experiment: LFAExperimentWithDeckLayout }
                         <td className="p-2">{step.volume}</td>
                         <td className="p-2">{getLiquidTypeName(step.liquidClass)}</td>
                         <td className="p-2">{step.time}</td>
-                        <td className="p-2">{`DX: ${step.dx}, DZ: ${step.dz}`}</td>
+                        <td className="p-2">{getLocation(step.dx, step.dz).name}</td>
                         <td className="p-2">{step.source}</td>
                       </tr>
                     ))}

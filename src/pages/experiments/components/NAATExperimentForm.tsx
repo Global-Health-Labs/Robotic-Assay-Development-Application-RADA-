@@ -1,7 +1,7 @@
 import axios from '@/api/axios';
 import { NAATDeckLayout, NAATExperiment, NewNAATExperiment } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -11,6 +11,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -19,17 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { DeckLayoutPreview } from '@/pages/experiments/components/DeckLayoutPreview';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DialogDescription } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { values } from 'lodash-es';
+import { Presentation } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
-import { useAuth } from '@/context/AuthContext';
 
 const formSchema = z
   .object({
@@ -163,7 +163,8 @@ export function NAATExperimentForm({
     },
   });
 
-  const [previewLayout, setPreviewLayout] = useState<NAATDeckLayout | null>(null);
+  const deckLayoutId = form.watch('deckLayoutId');
+  const selectedDeckLayout = deckLayouts?.find((l) => l.id === deckLayoutId) || null;
 
   return (
     <Form {...form}>
@@ -201,7 +202,7 @@ export function NAATExperimentForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Deck Layout</FormLabel>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-6">
                 <FormControl>
                   <Select
                     value={field.value}
@@ -221,20 +222,19 @@ export function NAATExperimentForm({
                     </SelectContent>
                   </Select>
                 </FormControl>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const layout = deckLayouts.find((l) => l.id === field.value);
-                    if (layout) {
-                      setPreviewLayout(layout);
-                    }
-                  }}
-                  className="h-full"
-                  disabled={!field.value}
-                >
-                  Preview
-                </Button>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Presentation
+                      className={cn(
+                        'h-4 w-4 cursor-help text-muted-foreground',
+                        !selectedDeckLayout && 'hidden'
+                      )}
+                    />
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-max">
+                    {selectedDeckLayout && <DeckLayoutPreview layout={selectedDeckLayout} />}
+                  </HoverCardContent>
+                </HoverCard>
               </div>
               <FormDescription
                 className={cn(
@@ -454,18 +454,6 @@ export function NAATExperimentForm({
           </Button>
         </div>
       </form>
-
-      <Dialog open={Boolean(previewLayout)} onOpenChange={() => setPreviewLayout(null)}>
-        <DialogContent className="h-auto max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{previewLayout?.name}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {previewLayout?.description}
-            </DialogDescription>
-          </DialogHeader>
-          {previewLayout && <DeckLayoutPreview layout={previewLayout} />}
-        </DialogContent>
-      </Dialog>
     </Form>
   );
 }

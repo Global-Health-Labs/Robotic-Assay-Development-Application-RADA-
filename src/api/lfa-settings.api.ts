@@ -1,21 +1,5 @@
+import { AssayPlateConfig } from '@/types/lfa.types';
 import axios from './axios';
-
-export interface PlateLocation {
-  dx: number;
-  dz: number;
-}
-
-export interface AssayPlateConfig {
-  id: string;
-  name: string;
-  description: string;
-  assayPlatePrefix: string;
-  deviceType: 'Strip' | 'Cassette';
-  numPlates: number;
-  numRows: number;
-  numColumns: number;
-  locations: PlateLocation[];
-}
 
 export type CreateAssayPlateConfig = Omit<AssayPlateConfig, 'id'>;
 

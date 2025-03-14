@@ -47,6 +47,7 @@ export default function LFAExperimentDetailsPage() {
         name: data.name,
         numReplicates: data.numReplicates,
         deckLayoutId: data.deckLayoutId,
+        assayPlateConfigId: data.assayPlateConfigId,
         useAsPreset: data.useAsPreset,
         type: 'LFA',
       };
