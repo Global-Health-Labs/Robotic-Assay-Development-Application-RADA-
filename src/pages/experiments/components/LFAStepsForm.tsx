@@ -29,15 +29,16 @@ const COLUMN_HEADERS = [
     tooltip: 'The location (DX, DZ) where the step will be performed',
   },
   {
-    title: 'Volume',
-    tooltip: 'The volume to be dispensed or aspirated',
-  },
-  {
     title: 'Liquid Type',
     tooltip: 'The type of liquid being handled in this step',
   },
   {
-    title: 'Time',
+    title: 'Volume (uL)',
+    tooltip: 'The volume to be dispensed or aspirated',
+  },
+
+  {
+    title: 'Time Delay (s)',
     tooltip: 'The time in seconds for this step',
   },
 ];
@@ -48,7 +49,7 @@ const stepSchema = z.object({
   volume: z.number().min(0, 'Volume must be a positive number'),
   liquidClass: z.string().min(1, 'Liquid type is required'),
   time: z.number().min(-1000, 'Invalid time'),
-  source: z.string().min(1, 'At least one source is required'),
+  source: z.string().min(1, 'At least one variable condition is required'),
 });
 
 const formSchema = z.object({
@@ -66,7 +67,7 @@ interface LFAStepsFormProps {
 export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormProps) {
   const { data: experimentData } = useLFAExperiment(experimentId);
 
-  const plateConfig = experimentData?.deckLayout.assayPlateConfig;
+  const plateConfig = experimentData?.assayPlateConfig;
   const locations = plateConfig?.locations || [];
   const steps = experimentData?.steps || [];
 

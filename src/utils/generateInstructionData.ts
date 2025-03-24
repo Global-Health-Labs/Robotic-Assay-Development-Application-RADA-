@@ -1,8 +1,8 @@
+import { ExperimentWithMastermix, Mastermix } from '@/api/naat-experiments.api';
+import { uniqBy } from 'lodash-es';
 import { v4 as uuidv4 } from 'uuid';
 import { getMastermixWorklistData } from './generateMastermixWorklist';
 import { getSampleWorklistData } from './generateSampleWorklist';
-import { NAATExperiment, Mastermix } from '@/api/naat-experiments.api';
-import { uniq } from 'lodash-es';
 
 interface InstructionData {
   id: string;
@@ -21,7 +21,7 @@ interface InstructionData {
  */
 export const getInstructionData = (
   listOfMastermixes: Mastermix[],
-  experimentalPlanData: NAATExperiment[]
+  experimentalPlanData: ExperimentWithMastermix[]
 ): InstructionData[] => {
   const data: InstructionData[] = [];
 
@@ -34,30 +34,35 @@ export const getInstructionData = (
     .sort((a, b) => a.from_plate.localeCompare(b.from_plate, undefined, { sensitivity: 'base' }));
 
   // Create the list of unique well and plate
-  const listOfWellPlate = mmWorklistData.map(
-    (row) => `${row.from_well}-${row.from_plate}-${row.source}`
-  );
-  const uniqueWellPlate = uniq(listOfWellPlate);
+  const listOfWellPlate = mmWorklistData.map((row) => ({
+    name: `${row.from_well}-${row.from_plate}-${row.source}`,
+    from_well: row.from_well,
+    from_plate: row.from_plate,
+    source: row.source,
+  }));
+  const uniqueWellPlate = uniqBy(listOfWellPlate, (row) => row.name);
   const totalVolumeSourcePair: InstructionData[] = [];
 
   // Loop through each well/plate pair to calculate the total volume of each unique well/plate/source
   uniqueWellPlate.forEach((object) => {
     let totalSourceVolume = 0;
-    const [wellIdStr, plate, source] = object.split('-');
-    const wellId = Number(wellIdStr.trim());
+    const plateConfig = experimentalPlanData[0].deckLayout.platePositions.find(
+      (plate) => plate.name.toLowerCase() === object.from_plate.toLowerCase()
+    );
+    const holdOverVolumeFactor = plateConfig?.holdoverVolumeFactor ?? 1;
 
     mmWorklistData.forEach((row) => {
-      if (object === `${row.from_well}-${row.from_plate}-${row.source}`) {
+      if (object.name === `${row.from_well}-${row.from_plate}-${row.source}`) {
         totalSourceVolume += row.volume_uL;
       }
     });
 
     totalVolumeSourcePair.push({
       id: uuidv4(),
-      source: source.trim(),
-      plate: plate.trim(),
-      well: wellId,
-      totalSourceVolumes: Math.ceil(((totalSourceVolume + 1) * 1.3) / 10) * 10,
+      source: object.source.trim(),
+      plate: object.from_plate.trim(),
+      well: object.from_well,
+      totalSourceVolumes: Math.ceil(((totalSourceVolume + 1) * holdOverVolumeFactor) / 10) * 10,
       isDone: false,
     });
   });
@@ -92,12 +97,18 @@ export const getInstructionData = (
       }
     }
 
+    const deckLayout = experimentalPlanData[0].deckLayout;
+    const plateConfig = deckLayout.platePositions.find(
+      (p) => p.name.toLowerCase() === plate.toLowerCase()
+    );
+    const holdOverVolumeFactor = plateConfig?.holdoverVolumeFactor ?? 1;
+
     totalVolumeSampleSourcePair.push({
       id: uuidv4(),
-      source,
-      plate,
+      source: source.trim(),
+      plate: plate.trim(),
       well: wellId,
-      totalSourceVolumes: Math.ceil(((totalSourceVolume + 1) * 1.3) / 10) * 10,
+      totalSourceVolumes: Math.ceil(((totalSourceVolume + 1) * holdOverVolumeFactor) / 10) * 10,
       isDone: false,
     });
   });

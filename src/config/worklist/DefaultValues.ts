@@ -12,7 +12,7 @@ interface DefaultValue {
 }
 
 interface AliquotingMM {
-  LIQUID_CLASS: string;
+  getLiquidClass: (liquidType: string) => string;
   SOURCE: string;
   ASP_MIXING: number;
   DISPENSE_TYPE: string;
@@ -21,7 +21,7 @@ interface AliquotingMM {
 }
 
 interface MixMM {
-  LIQUID_CLASS: string;
+  getLiquidClass: (liquidType: string) => string;
   SOURCE: string;
   ASP_MIXING: number;
   DISPENSE_TYPE: string;
@@ -52,28 +52,32 @@ export const VALUE: DefaultValue = {
   COLUMN_L: 1, // guid
   COLUMN_M: 'some path',
   COLUMN_Q: -1, // touchoff_dis
-  COLUMN_R: 'ivl_96_dw_v1_0002',
+  COLUMN_R: 'dw_96_0002',
+  // COLUMN_R: 'ivl_96_dw_v1_0002',
 };
 
 // Default values during aliquoting mastermix step
 export const ALIQUOTING_MM: AliquotingMM = {
-  LIQUID_CLASS: 'RoboNAAT_tip300_20uL_MM__JetEmpty_Part',
+  getLiquidClass: (liquidType: string) => `RoboNAAT_HighVolume_${liquidType}_DispenseSurface_Empty`,
   SOURCE: 'MM_aq',
   ASP_MIXING: 0,
   DISPENSE_TYPE: 'Jet_Empty',
   TIP_TYPE: 300,
-  FROM_PLATE: 'ivl_96_dw_v1_0002',
+  FROM_PLATE: 'dw_96_0002',
+  // FROM_PLATE: 'ivl_96_dw_v1_0002',
 };
 
 // Default values during mixing mastermix step
 export const MIX_MM: MixMM = {
-  LIQUID_CLASS: 'RoboNAAT_HighVolume_Water_DispenseSurface_Empty',
+  getLiquidClass: (liquidType: string) => `RoboNAAT_HighVolume_${liquidType}_DispenseSurface_Empty`,
   SOURCE: 'mixing',
   ASP_MIXING: 10,
   DISPENSE_TYPE: 'Surface_Empty',
   TIP_TYPE: 1000,
-  TO_PLATE: 'ivl_96_dw_v1_0002',
-  FROM_PLATE: 'ivl_96_dw_v1_0002',
+  TO_PLATE: 'dw_96_0002',
+  FROM_PLATE: 'dw_96_0002',
+  // TO_PLATE: 'ivl_96_dw_v1_0002',
+  // FROM_PLATE: 'ivl_96_dw_v1_0002',
 };
 
 // Default values for sample worklist
@@ -83,5 +87,6 @@ export const SAMPLE_MM: SampleMM = {
   ASP_MIXING: 0,
   DISPENSE_TYPE: 'Surface_Empty',
   TIP_TYPE: 50,
-  FROM_PLATE: 'ivl_96_template_v1_0001',
+  FROM_PLATE: 'pcr_96_0001',
+  // FROM_PLATE: 'ivl_96_template_v1_0001',
 };

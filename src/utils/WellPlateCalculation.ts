@@ -1,7 +1,9 @@
-import { DROPDOWN_OPTIONS } from "../config/FormInputValues";
+import { DROPDOWN_OPTIONS } from '../config/FormInputValues';
 
-export const FROM_PLATE_DW = "ivl_96_dw_v1_0001";
-export const FROM_PLATE_FLAT = "ivl_96_flat_v1_0001";
+export const FROM_PLATE_DW = 'dw_96_0001';
+export const FROM_PLATE_FLAT = 'flat_96_0001';
+// export const FROM_PLATE_DW = "ivl_96_dw_v1_0001";
+// export const FROM_PLATE_FLAT = "ivl_96_flat_v1_0001";
 
 interface VolumeSourcePair {
   source: string;
@@ -9,22 +11,22 @@ interface VolumeSourcePair {
 }
 
 export const getTotalWellsPerMastermix = (
-  numOfSampleConcentration: number, 
+  numOfSampleConcentration: number,
   technicalReplicate: number
 ): number => {
   return numOfSampleConcentration * technicalReplicate;
-}
+};
 
 /**
  * Calculate the value of from_plate for making mastermix step
  */
 export const getFromPlate_MM = (
-  totalVolumeSourcePair: VolumeSourcePair[], 
+  totalVolumeSourcePair: VolumeSourcePair[],
   source: string
 ): string => {
-  let from_plate = "";
+  let from_plate = '';
 
-  totalVolumeSourcePair.forEach(object => {
+  totalVolumeSourcePair.forEach((object) => {
     if (object.source === source) {
       if (object.totalSourceVolumes > 160) {
         from_plate = FROM_PLATE_DW;
@@ -34,8 +36,8 @@ export const getFromPlate_MM = (
     }
   });
 
-  return from_plate; 
-}
+  return from_plate;
+};
 
 /**
  * Calculate the value of to_plate for aliquoting step (based on PCR plate size)
@@ -43,19 +45,18 @@ export const getFromPlate_MM = (
  * @param rowNumber Index of row in the worklist (1 row = 1 well required)
  * @returns value of to_plate (in worklist file)
  */
-export const getToPlate_AQ = (
-  pcrSize: number, 
-  rowNumber: number
-): string => {
+export const getToPlate_AQ = (pcrSize: number, rowNumber: number): string => {
   let prefix = '';
   const id = Math.ceil(rowNumber / pcrSize);
 
   switch (pcrSize) {
     case DROPDOWN_OPTIONS.PCR_PLATE_SIZE[0]: // 96
-      prefix = 'PCR_onCooler_000';
+      // prefix = 'PCR_onCooler_000';
+      prefix = 'pcr_96_000';
       break;
     case DROPDOWN_OPTIONS.PCR_PLATE_SIZE[1]: // 384
-      prefix = 'ivl_384_flat_v1_000';
+      // prefix = 'ivl_384_flat_v1_000';
+      prefix = 'flat_384_000';
       break;
     /*
      * NOTE: If you need to add new PCR plate size option, you need to add new option to the array PCR_PLATE_SIZE
@@ -70,4 +71,4 @@ export const getToPlate_AQ = (
   }
 
   return prefix + id;
-}
+};

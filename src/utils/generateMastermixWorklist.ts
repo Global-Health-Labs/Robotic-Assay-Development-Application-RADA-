@@ -46,6 +46,7 @@ export const getMastermixWorklistData = (
     numOfSampleConcentrations,
     numOfTechnicalReplicates,
     sampleVolumePerReaction,
+    deckLayout,
   } = experimentalPlanData[0];
 
   // Calculate volume of mastermix
@@ -244,7 +245,13 @@ export const getMastermixWorklistData = (
         if (volumeSource.source.toLowerCase() === currentRowSource.toLowerCase()) {
           // Calculate max volume per well (practical 80%)
           const maxWellVolume = currentRowFromPlate === FROM_PLATE_DW ? 700 : 140;
-          maxNumOfWells = Math.ceil((volumeSource.totalSourceVolumes * 1.3) / maxWellVolume);
+          const plateConfig = deckLayout.platePositions.find(
+            (p) => p.name.toLowerCase() === currentRowFromPlate.toLowerCase()
+          );
+          const holdOverVolumeFactor = plateConfig?.holdoverVolumeFactor ?? 1;
+          maxNumOfWells = Math.ceil(
+            (volumeSource.totalSourceVolumes * holdOverVolumeFactor) / maxWellVolume
+          );
           break;
         }
       }
@@ -292,6 +299,7 @@ export const getMastermixWorklistData = (
   if (generateAllData) {
     const mm_groupNumber = groupNumber + 1; // continue from mm step
     const mixingData = generateMixingSteps(
+      experimentalPlanData[0],
       listOfMastermixes,
       listOfTotalVolumesEachMM,
       mm_groupNumber,
@@ -302,6 +310,7 @@ export const getMastermixWorklistData = (
     });
 
     const aliquotingData = generateAliquotingStep(
+      experimentalPlanData[0],
       listOfMastermixes,
       experimentalPlanData,
       mm_groupNumber,
@@ -319,6 +328,7 @@ export const getMastermixWorklistData = (
  * Loop through each mastermix to generate data for mixing the mastermix steps.
  */
 const generateMixingSteps = (
+  experiment: NAATExperiment,
   listOfMastermixes: Mastermix[],
   listOfMixtureVolume: number[],
   groupNumber: number,
@@ -339,7 +349,7 @@ const generateMixingSteps = (
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: volume,
-        liquid_class: MIX_MM.LIQUID_CLASS,
+        liquid_class: MIX_MM.getLiquidClass(experiment.mixingStepLiquidType),
         timer_delta: VALUE.COLUMN_F,
         source: MIX_MM.SOURCE,
         step_index: VALUE.COLUMN_H,
@@ -370,6 +380,7 @@ const generateMixingSteps = (
  * Loop through each mastermix to generate data for aliquoting mastermix
  */
 const generateAliquotingStep = (
+  experiment: NAATExperiment,
   listOfMastermixes: Mastermix[],
   experimentalPlanData: NAATExperiment[],
   mm_groupNumber: number,
@@ -400,7 +411,7 @@ const generateAliquotingStep = (
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: masterMixVolumePerReaction,
-        liquid_class: ALIQUOTING_MM.LIQUID_CLASS,
+        liquid_class: ALIQUOTING_MM.getLiquidClass(experiment.aqStepLiquidType),
         timer_delta: VALUE.COLUMN_F,
         source: ALIQUOTING_MM.SOURCE,
         step_index: VALUE.COLUMN_H,

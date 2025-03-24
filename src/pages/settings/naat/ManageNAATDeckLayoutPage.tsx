@@ -26,6 +26,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
+import { isNaN, isNumber } from 'lodash-es';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -120,6 +121,13 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
       ...values,
       platePositions: plates.map((plate, index) => ({
         ...plate,
+        holdoverVolumeFactor:
+          plate.holdoverVolumeFactor &&
+          isNumber(plate.holdoverVolumeFactor) &&
+          !isNaN(plate.holdoverVolumeFactor) &&
+          plate.holdoverVolumeFactor > 0
+            ? plate.holdoverVolumeFactor
+            : 1,
         position: index,
       })),
     };

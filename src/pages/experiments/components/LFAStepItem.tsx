@@ -51,7 +51,10 @@ export function LFAStepItem({
   // State to track current source input value
   const [currentSourceInput, setCurrentSourceInput] = useState<string>('');
 
-  const { control, setValue, setError } = useFormContext();
+  const { control, setValue, setError, watch } = useFormContext();
+
+  const liquidClass = watch(`steps.${index}.liquidClass`);
+  const isImaging = liquidClass === 'imaging';
 
   // Initialize sources from form value
   useEffect(() => {
@@ -77,6 +80,10 @@ export function LFAStepItem({
 
     loadSources();
   }, [control, index]);
+
+  useEffect(() => {
+    setValue(`steps.${index}.volume`, 0);
+  }, [isImaging, setValue]);
 
   // Process input string and add sources
   const addSource = () => {
@@ -126,10 +133,10 @@ export function LFAStepItem({
 
     // Add error if no sources left
     if (updatedSources.length === 0) {
-      setSourceError('At least one source is required');
+      setSourceError('At least one variable condition is required');
       setError(`steps.${index}.source`, {
         type: 'manual',
-        message: 'At least one source is required',
+        message: 'At least one variable condition is required',
       });
     }
   };
@@ -244,23 +251,6 @@ export function LFAStepItem({
 
         <FormField
           control={control}
-          name={`steps.${index}.volume`}
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
           name={`steps.${index}.liquidClass`}
           render={({ field }) => (
             <FormItem>
@@ -277,6 +267,24 @@ export function LFAStepItem({
                     ))}
                   </SelectContent>
                 </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name={`steps.${index}.volume`}
+          disabled={isImaging}
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -304,10 +312,12 @@ export function LFAStepItem({
       {/* Sources Section */}
       <div className="px-4 pb-4">
         <div className="group relative flex cursor-help items-center gap-1 py-2 text-xs font-medium text-muted-foreground">
-          <span className="border-b border-dotted border-muted-foreground/50">Sources</span>
+          <span className="border-b border-dotted border-muted-foreground/50">
+            Variable Conditions
+          </span>
           <div className="invisible absolute bottom-full left-0 z-50 max-w-[250px] -translate-y-1 rounded-md bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-md group-hover:visible">
-            Add one or more sources for this step. Enter multiple sources separated by spaces or
-            commas. Each source must be at most 50 characters.
+            Add one or more variable conditions for this step. Enter multiple variables separated by
+            spaces or commas. Each variable can be at most 50 characters.
           </div>
         </div>
 
@@ -351,7 +361,7 @@ export function LFAStepItem({
               value={currentSourceInput}
               onChange={(e) => handleSourceInputChange(e.target.value)}
               onKeyDown={handleSourceKeyPress}
-              placeholder="Enter sources (separate multiple with spaces or commas)..."
+              placeholder="Enter Variable Conditions (separate multiple with spaces or commas)..."
               className={cn(sourceError && 'border-red-500')}
             />
             {sourceError && <p className="mt-1 text-xs text-destructive">{sourceError}</p>}

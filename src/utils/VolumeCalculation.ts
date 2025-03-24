@@ -35,8 +35,6 @@ export const getVolumeWorking = (
   volPerReaction: number,
   volSample: number
 ): number => {
-  console.log('volPerReaction', volPerReaction);
-  console.log('volSample', volSample);
   return numOfSampleConcentrations * numOfTechnicalReplicates * (volPerReaction + volSample) * 1.3;
 };
 

@@ -5,6 +5,7 @@ export type PlateItem = {
   wellCount: WellCount;
   plateDescriptor: PlateDescriptor;
   sequenceNumber: string;
+  holdoverVolumeFactor?: number;
 };
 
 export type WellCount = 1 | 96 | 384;
