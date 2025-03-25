@@ -82,7 +82,9 @@ export function LFAStepItem({
   }, [control, index]);
 
   useEffect(() => {
-    setValue(`steps.${index}.volume`, 0);
+    if (isImaging) {
+      setValue(`steps.${index}.volume`, 0);
+    }
   }, [isImaging, setValue]);
 
   // Process input string and add sources
