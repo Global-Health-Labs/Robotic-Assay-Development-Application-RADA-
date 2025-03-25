@@ -1,6 +1,6 @@
 import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { FC, useState } from 'react';
-import { NAATDeckLayout } from './DeckLayout';
+import { NAATDeckLayout } from './NAATDeckLayout';
 import { InstructionDetails } from './InstructionDetails';
 import { PlateLayout } from './PlateLayout';
 import { SolutionsTable } from './SolutionsTable';
@@ -37,19 +37,21 @@ const NAATInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
   const selectedPlateName = plateIdToName(selectedState.plate);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-4">
-        <div className="w-1/3">
-          <SolutionsTable
-            experiment={experiment}
-            selectedState={selectedState}
-            onRowClick={handleRowClick}
-            onPlateWellChange={setCurrentPlateWell}
-          />
-        </div>
+    <div className="grid grid-cols-12 gap-4">
+      {/* Solutions Table - Left Column */}
+      <div className="col-span-4">
+        <SolutionsTable
+          experiment={experiment}
+          selectedState={selectedState}
+          onRowClick={handleRowClick}
+          onPlateWellChange={setCurrentPlateWell}
+        />
+      </div>
 
-        <div className="flex w-2/3 flex-col gap-4">
-          <div className="relative">
+      {/* Plate Layout and Instructions - Middle Column */}
+      <div className="col-span-8">
+        <div className="flex flex-col gap-4">
+          <div className="sticky top-4">
             <PlateLayout
               plateWellCount={currentPlateWell}
               selectedWellId={selectedState.wellId}
@@ -57,9 +59,13 @@ const NAATInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
             />
             <InstructionDetails selectedState={selectedState} cellPosition={selectedCellPosition} />
           </div>
+
+          {/* Deck Layout - Right Column */}
+          <div className="sticky top-4">
+            <NAATDeckLayout deckLayout={experiment.deckLayout} selectedPlate={selectedPlateName} />
+          </div>
         </div>
       </div>
-      <NAATDeckLayout deckLayout={experiment.deckLayout} selectedPlate={selectedPlateName} />
     </div>
   );
 };

@@ -1,27 +1,47 @@
 import { LFAStep, useLFAExperiment } from '@/api/lfa-experiments.api';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Form } from '@/components/ui/form';
 import { useLFALiquidTypes } from '@/hooks/useLFALiquidTypes';
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { size } from 'lodash-es';
-import { Trash2 } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { LFAStepItem } from './LFAStepItem';
+import { SortableStepRow } from './SortableStepRow';
+
+const COLUMN_HEADERS = [
+  {
+    title: 'Location',
+    tooltip: 'The location (DX, DZ) where the step will be performed',
+  },
+  {
+    title: 'Liquid Type',
+    tooltip: 'The type of liquid being handled in this step',
+  },
+  {
+    title: 'Volume (uL)',
+    tooltip: 'The volume to be dispensed or aspirated',
+  },
+
+  {
+    title: 'Time Delay (s)',
+    tooltip: 'The time in seconds for this step',
+  },
+];
 
 const stepSchema = z.object({
   step: z.string().min(1, 'Step name is required'),
@@ -29,7 +49,7 @@ const stepSchema = z.object({
   volume: z.number().min(0, 'Volume must be a positive number'),
   liquidClass: z.string().min(1, 'Liquid type is required'),
   time: z.number().min(-1000, 'Invalid time'),
-  source: z.string().min(1, 'Source is required'),
+  source: z.string().min(1, 'At least one variable condition is required'),
 });
 
 const formSchema = z.object({
@@ -47,11 +67,19 @@ interface LFAStepsFormProps {
 export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormProps) {
   const { data: experimentData } = useLFAExperiment(experimentId);
 
-  const plateConfig = experimentData?.deckLayout.assayPlateConfig;
+  const plateConfig = experimentData?.assayPlateConfig;
   const locations = plateConfig?.locations || [];
   const steps = experimentData?.steps || [];
 
   const { data: liquidTypes = [] } = useLFALiquidTypes();
+
+  // Set up sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const defaultStep = {
     step: '',
@@ -82,10 +110,24 @@ export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormPro
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control: form.control,
     name: 'steps',
   });
+
+  // Handle drag end event
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      // Find the indices of the items being dragged
+      const activeIndex = fields.findIndex((item) => item.id === active.id);
+      const overIndex = fields.findIndex((item) => item.id === over.id);
+
+      // Move the item in the form's field array
+      move(activeIndex, overIndex);
+    }
+  };
 
   const handleSubmit = async (values: FormValues) => {
     try {
@@ -99,11 +141,11 @@ export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormPro
           volume: step.volume,
           liquidClass: step.liquidClass,
           time: step.time,
-          source: step.source,
+          source: step.source, // This is already a comma-separated string
         };
       });
 
-      // Save steps first
+      // Save steps
       await onSubmit({ steps: transformedSteps });
     } catch (error) {
       console.error('Error saving steps:', error);
@@ -113,155 +155,50 @@ export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormPro
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="p-6">
-          <div className="space-y-6">
-            {fields.map((field, index) => (
-              <div key={field.id} className="space-y-4 rounded-lg border p-4 shadow">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-lg font-semibold">Step {index + 1}</h4>
-                  {fields.length > 1 && (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
-                      <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name={`steps.${index}.step`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Step Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+        <div className="relative space-y-6">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={fields.map((field) => field.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {fields.map((field, index) => (
+                <SortableStepRow key={field.id} id={field.id}>
+                  <LFAStepItem
+                    index={index}
+                    canDelete={fields.length > 1}
+                    onDelete={() => remove(index)}
+                    locations={locations}
+                    liquidTypes={liquidTypes}
+                    columnHeaders={COLUMN_HEADERS}
                   />
+                </SortableStepRow>
+              ))}
+            </SortableContext>
+          </DndContext>
 
-                  <FormField
-                    control={form.control}
-                    name={`steps.${index}.location`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location (DX, DZ)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select location" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {locations.map((loc, i) => (
-                              <SelectItem key={i} value={`${loc.dx},${loc.dz}`}>
-                                DX: {loc.dx}, DZ: {loc.dz}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`steps.${index}.volume`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Volume</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`steps.${index}.liquidClass`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Liquid Type</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select liquid type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {liquidTypes.map(({ value, displayName }) => (
-                              <SelectItem key={value} value={value}>
-                                {displayName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`steps.${index}.time`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Time</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`steps.${index}.source`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Source</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            ))}
-
-            <div className="flex w-full justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  append({
-                    step: '',
-                    location: '',
-                    volume: 0,
-                    liquidClass: '',
-                    time: 0,
-                    source: '',
-                  })
-                }
-              >
-                Add Step
-              </Button>
-            </div>
+          <div className="flex w-full justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                append({
+                  step: '',
+                  location: '',
+                  volume: 0,
+                  liquidClass: '',
+                  time: 0,
+                  source: '',
+                })
+              }
+              className="gap-2"
+            >
+              <PlusCircle className="h-4 w-4" />
+              Add Step
+            </Button>
           </div>
         </div>
 
@@ -270,9 +207,6 @@ export function LFAStepsForm({ onSubmit, onBack, experimentId }: LFAStepsFormPro
             Back
           </Button>
           <Button type="submit">Save and Continue</Button>
-          {/* <Button type="button" onClick={handleGenerateWorklist}>
-            Generate Worklist
-          </Button> */}
         </div>
       </form>
     </Form>

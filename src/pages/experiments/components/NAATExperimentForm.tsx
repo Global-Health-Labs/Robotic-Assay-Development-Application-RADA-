@@ -1,7 +1,7 @@
 import axios from '@/api/axios';
 import { NAATDeckLayout, NAATExperiment, NewNAATExperiment } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -11,6 +11,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -19,17 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { DeckLayoutPreview } from '@/pages/experiments/components/DeckLayoutPreview';
+import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DialogDescription } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { values } from 'lodash-es';
+import { Presentation } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
-import { useAuth } from '@/context/AuthContext';
 
 const formSchema = z
   .object({
@@ -61,6 +62,16 @@ const formSchema = z
       .min(1, 'Sample volume per reaction must be 1 or greater')
       .max(50, 'Sample volume per reaction cannot exceed 50')
       .positive('Sample volume per reaction must be a positive number'),
+    mixingStepLiquidType: z
+      .string({
+        required_error: 'Liquid type is required',
+      })
+      .min(1, 'Liquid type is required'),
+    aqStepLiquidType: z
+      .string({
+        required_error: 'Liquid type is required',
+      })
+      .min(1, 'Liquid type is required'),
     pcrPlateSize: z.string({
       required_error: 'PCR plate size is required',
     }),
@@ -114,6 +125,8 @@ const getFormDefaultValues = (experiment?: NAATExperiment): FormValues => {
     pcrPlateSize: PCR_PLATE_SIZES[0],
     deckLayoutId: '',
     useAsPreset: false,
+    mixingStepLiquidType: '',
+    aqStepLiquidType: '',
   };
 };
 
@@ -124,8 +137,9 @@ export function NAATExperimentForm({
   onCancel,
   mode,
 }: ExperimentFormProps) {
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const { role } = useAuth();
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const { data: liquidTypes, isLoading: isLoadingLiquidTypes } = useNAATLiquidTypes();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -163,11 +177,12 @@ export function NAATExperimentForm({
     },
   });
 
-  const [previewLayout, setPreviewLayout] = useState<NAATDeckLayout | null>(null);
+  const deckLayoutId = form.watch('deckLayoutId');
+  const selectedDeckLayout = deckLayouts?.find((l) => l.id === deckLayoutId) || null;
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="mt-8 space-y-8">
         <FormField
           control={form.control}
           name="name"
@@ -201,7 +216,7 @@ export function NAATExperimentForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Deck Layout</FormLabel>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-6">
                 <FormControl>
                   <Select
                     value={field.value}
@@ -221,20 +236,19 @@ export function NAATExperimentForm({
                     </SelectContent>
                   </Select>
                 </FormControl>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const layout = deckLayouts.find((l) => l.id === field.value);
-                    if (layout) {
-                      setPreviewLayout(layout);
-                    }
-                  }}
-                  className="h-full"
-                  disabled={!field.value}
-                >
-                  Preview
-                </Button>
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Presentation
+                      className={cn(
+                        'h-4 w-4 cursor-help text-muted-foreground',
+                        !selectedDeckLayout && 'hidden'
+                      )}
+                    />
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-max">
+                    {selectedDeckLayout && <DeckLayoutPreview layout={selectedDeckLayout} />}
+                  </HoverCardContent>
+                </HoverCard>
               </div>
               <FormDescription
                 className={cn(
@@ -251,132 +265,227 @@ export function NAATExperimentForm({
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="numOfSampleConcentrations"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Number of Samples</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="[1 - 100]"
-                  {...field}
-                  onFocus={() => setFocusedField('numOfSampleConcentrations')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </FormControl>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'numOfSampleConcentrations'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Number of samples to be included in the experiment, this number should include
-                controls as well
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="numOfTechnicalReplicates"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Technical Replicates</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="[1 - 50]"
-                  {...field}
-                  onFocus={() => setFocusedField('numOfTechnicalReplicates')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </FormControl>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'numOfTechnicalReplicates'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Number of replicates that will be run for each condition tested
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="mastermixVolumePerReaction"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mastermix Volume</FormLabel>
-              <FormControl>
-                <div className="flex items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-8">
+          <FormField
+            control={form.control}
+            name="numOfSampleConcentrations"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Samples</FormLabel>
+                <FormControl>
                   <Input
                     type="number"
-                    placeholder="[1 - 200]"
+                    placeholder="[1 - 100]"
                     {...field}
-                    onFocus={() => setFocusedField('mastermixVolumePerReaction')}
+                    onFocus={() => setFocusedField('numOfSampleConcentrations')}
                     onBlur={() => setFocusedField(null)}
                   />
-                  <span className="ml-2 text-sm text-muted-foreground">µL</span>
-                </div>
-              </FormControl>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'mastermixVolumePerReaction'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Volume of mastermix to be added into each well
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'numOfSampleConcentrations'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Number of samples to be included in the experiment, this number should include
+                  controls as well
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="sampleVolumePerReaction"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sample Volume</FormLabel>
-              <FormControl>
-                <div className="flex items-center">
+          <FormField
+            control={form.control}
+            name="numOfTechnicalReplicates"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Technical Replicates</FormLabel>
+                <FormControl>
                   <Input
                     type="number"
                     placeholder="[1 - 50]"
                     {...field}
-                    onFocus={() => setFocusedField('sampleVolumePerReaction')}
+                    onFocus={() => setFocusedField('numOfTechnicalReplicates')}
                     onBlur={() => setFocusedField(null)}
                   />
-                  <span className="ml-2 text-sm text-muted-foreground">µL</span>
-                </div>
-              </FormControl>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'sampleVolumePerReaction'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Volume of sample to be added into each well
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'numOfTechnicalReplicates'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Number of replicates that will be run for each condition tested
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-8">
+          <FormField
+            control={form.control}
+            name="mastermixVolumePerReaction"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mastermix Volume</FormLabel>
+                <FormControl>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      placeholder="[1 - 200]"
+                      {...field}
+                      onFocus={() => setFocusedField('mastermixVolumePerReaction')}
+                      onBlur={() => setFocusedField(null)}
+                    />
+                    <span className="ml-2 text-sm text-muted-foreground">µL</span>
+                  </div>
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'mastermixVolumePerReaction'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Volume of mastermix to be added into each well
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="sampleVolumePerReaction"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sample Volume</FormLabel>
+                <FormControl>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      placeholder="[1 - 50]"
+                      {...field}
+                      onFocus={() => setFocusedField('sampleVolumePerReaction')}
+                      onBlur={() => setFocusedField(null)}
+                    />
+                    <span className="ml-2 text-sm text-muted-foreground">µL</span>
+                  </div>
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'sampleVolumePerReaction'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Volume of sample to be added into each well
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-8">
+          <FormField
+            control={form.control}
+            name="mixingStepLiquidType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mixing Step Liquid Type</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    onOpenChange={(open) => {
+                      if (open) {
+                        setFocusedField('mixingStepLiquidType');
+                      } else {
+                        setFocusedField(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select liquid type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {liquidTypes?.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'mixingStepLiquidType'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Type of liquid used in the mixing step
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="aqStepLiquidType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>AQ Step Liquid Type</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    onOpenChange={(open) => {
+                      if (open) {
+                        setFocusedField('aqStepLiquidType');
+                      } else {
+                        setFocusedField(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select liquid type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {liquidTypes?.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'aqStepLiquidType'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Type of liquid used in the AQ step
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -454,18 +563,6 @@ export function NAATExperimentForm({
           </Button>
         </div>
       </form>
-
-      <Dialog open={Boolean(previewLayout)} onOpenChange={() => setPreviewLayout(null)}>
-        <DialogContent className="h-auto max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{previewLayout?.name}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {previewLayout?.description}
-            </DialogDescription>
-          </DialogHeader>
-          {previewLayout && <DeckLayoutPreview layout={previewLayout} />}
-        </DialogContent>
-      </Dialog>
     </Form>
   );
 }

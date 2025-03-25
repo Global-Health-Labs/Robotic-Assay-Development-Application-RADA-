@@ -12,9 +12,26 @@ import { Separator } from '@/components/ui/separator';
 import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 import { useVolumeUnits } from '@/hooks/useVolumeUnits';
 import { cn } from '@/lib/utils';
-import { CopyPlus, Menu, PlusCircle, Trash2 } from 'lucide-react';
+import { CopyPlus, GripVertical, Menu, PlusCircle, Trash2 } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { ReagentDetails } from './ReagentDetails';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface MastermixDetailsProps {
   mastermix: Mastermix;
@@ -53,6 +70,44 @@ const COLUMN_HEADERS = [
   },
 ];
 
+// Sortable Reagent Row component
+interface SortableReagentRowProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+function SortableReagentRow({ id, children }: SortableReagentRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+    position: isDragging ? 'relative' : ('static' as any),
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn('col-span-full pb-2', isDragging && 'opacity-50')}
+    >
+      <div className="flex items-start">
+        <div className="flex-1">{children}</div>
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex cursor-grab items-center px-1 py-2.5 text-muted-foreground hover:text-foreground"
+        >
+          <GripVertical className="h-4 w-4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MastermixDetails({
   mastermix,
   canDelete,
@@ -67,6 +122,14 @@ export function MastermixDetails({
 
   const { data: liquidTypes, isLoading: liquidTypesLoading } = useNAATLiquidTypes();
   const { data: volumeUnits, isLoading: volumeUnitsLoading } = useVolumeUnits();
+
+  // Set up DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Update overall validation status whenever a reagent's validation changes
   useEffect(() => {
@@ -145,6 +208,23 @@ export function MastermixDetails({
     onUpdate({ ...mastermix, name });
   };
 
+  // Handle drag end event
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = mastermix.reagents.findIndex((r) => r.id === active.id);
+      const newIndex = mastermix.reagents.findIndex((r) => r.id === over.id);
+
+      const updatedReagents = arrayMove(mastermix.reagents, oldIndex, newIndex);
+
+      onUpdate({
+        ...mastermix,
+        reagents: updatedReagents,
+      });
+    }
+  };
+
   if (liquidTypesLoading || volumeUnitsLoading) {
     return <PageLoading />;
   }
@@ -153,7 +233,7 @@ export function MastermixDetails({
     <div className="mastermix-container space-y-4 rounded-lg border border-zinc-200 shadow">
       <div className="flex items-center justify-between">
         <div className="flex w-full items-center gap-2 bg-sky-50 px-4 py-2">
-          <div className="flex flex-col gap-1">
+          <div className="ml-6 flex flex-col gap-1">
             <p className={cn('text-xs', nameValid ? 'text-muted-foreground' : 'text-destructive')}>
               Mastermix Name
             </p>
@@ -217,27 +297,34 @@ export function MastermixDetails({
             </div>
           </div>
         ))}
-        <div className="w-8" /> {/* Actions column */}
-        {/* Reagents */}
-        {mastermix.reagents.map((reagent) => (
-          <div key={reagent.id} className="col-span-full pb-2">
-            <ReagentDetails
-              reagent={reagent}
-              canDelete={mastermix.reagents.length > 1}
-              onUpdate={(field, value) => updateReagent(reagent.id, field, value)}
-              onDelete={() => removeReagent(reagent.id)}
-              onClone={() => cloneReagent(reagent)}
-              liquidTypes={liquidTypes || []}
-              volumeUnits={volumeUnits || []}
-              onValidationChange={(isValid) => {
-                setReagentValidation((prev) => ({
-                  ...prev,
-                  [reagent.id]: isValid,
-                }));
-              }}
-            />
-          </div>
-        ))}
+        <div className="w-24" /> {/* Actions column */}
+        {/* Reagents with drag and drop */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={mastermix.reagents.map((r) => r.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {mastermix.reagents.map((reagent) => (
+              <SortableReagentRow key={reagent.id} id={reagent.id}>
+                <ReagentDetails
+                  reagent={reagent}
+                  canDelete={mastermix.reagents.length > 1}
+                  onUpdate={(field, value) => updateReagent(reagent.id, field, value)}
+                  onDelete={() => removeReagent(reagent.id)}
+                  onClone={() => cloneReagent(reagent)}
+                  liquidTypes={liquidTypes || []}
+                  volumeUnits={volumeUnits || []}
+                  onValidationChange={(isValid) => {
+                    setReagentValidation((prev) => ({
+                      ...prev,
+                      [reagent.id]: isValid,
+                    }));
+                  }}
+                />
+              </SortableReagentRow>
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );

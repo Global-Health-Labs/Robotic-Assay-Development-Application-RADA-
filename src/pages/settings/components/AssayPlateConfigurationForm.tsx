@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 
 const locationSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be at most 100 characters'),
   dx: z.number().min(0, 'X offset must be non-negative'),
   dz: z.number().min(0, 'Z offset must be non-negative'),
 });
@@ -66,7 +67,7 @@ export function AssayPlateConfigurationForm({
       numPlates: config?.numPlates ?? 1,
       numRows: config?.numRows ?? 1,
       numColumns: config?.numColumns ?? 1,
-      locations: config?.locations ?? [{ dx: 0, dz: 0 }],
+      locations: config?.locations ?? [{ name: '', dx: 0, dz: 0 }],
     },
   });
 
@@ -167,7 +168,7 @@ export function AssayPlateConfigurationForm({
                       <Input
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(+e.target.value)}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -220,7 +221,7 @@ export function AssayPlateConfigurationForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append({ dx: 0, dz: 0 })}
+                  onClick={() => append({ name: '', dx: 0, dz: 0 })}
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Location
@@ -228,7 +229,20 @@ export function AssayPlateConfigurationForm({
               </div>
 
               {fields.map((field, index) => (
-                <div key={field.id} className="flex items-end gap-4">
+                <div key={field.id} className="flex items-start gap-4">
+                  <FormField
+                    control={form.control}
+                    name={`locations.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name={`locations.${index}.dx`}
@@ -267,6 +281,7 @@ export function AssayPlateConfigurationForm({
                     type="button"
                     variant="ghost"
                     size="icon"
+                    className="self-center"
                     onClick={() => handleRemove(index)}
                     disabled={fields.length === 1}
                   >

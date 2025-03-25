@@ -9,7 +9,7 @@ export function generatePlateName(
   plateDescriptor: PlateDescriptor,
   sequenceNumber: string
 ): string {
-  return `${wellCount}_${plateDescriptor}_${sequenceNumber}`;
+  return `${plateDescriptor}_${wellCount}_${sequenceNumber}`;
 }
 
 export function createDefaultPlates(): PlateItem[] {

@@ -1,16 +1,16 @@
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { LFADeckLayout as LFADeckLayoutType } from '@/types/lfa.types';
+import { AssayPlateConfig, LFADeckLayout as LFADeckLayoutType } from '@/types/lfa.types';
 import { FC } from 'react';
 
 interface Props {
   selectedPlate: string;
   deckLayout: LFADeckLayoutType;
+  assayPlateConfig: AssayPlateConfig;
 }
 
-export const LFADeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {
+export const LFADeckLayout: FC<Props> = ({ selectedPlate, deckLayout, assayPlateConfig }) => {
   const layout = deckLayout;
-  const { assayPlateConfig } = layout;
 
   const renderPlateColumn = (column: number) => {
     const numCols = 3;

@@ -2,7 +2,6 @@ import axios from '@/api/axios';
 import { LFAExperiment, NewLFAExperiment } from '@/api/lfa-experiments.api';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -12,6 +11,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -22,10 +22,11 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
-import { LFADeckLayout } from '@/types/lfa.types';
+import { AssayPlateConfig, LFADeckLayout } from '@/types/lfa.types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { values } from 'lodash-es';
+import { Presentation } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -42,6 +43,11 @@ const formSchema = z.object({
       required_error: 'Deck layout is required',
     })
     .min(1, 'Deck layout is required'),
+  assayPlateConfigId: z
+    .string({
+      required_error: 'Assay plate configuration is required',
+    })
+    .min(1, 'Assay plate configuration is required'),
   numReplicates: z.coerce
     .number()
     .min(1, 'Number of technical replicates must be 1 or greater')
@@ -65,6 +71,7 @@ function getFormDefaultValues(experiment?: LFAExperiment): FormValues {
     return {
       name: '',
       deckLayoutId: '',
+      assayPlateConfigId: '',
       numReplicates: 1,
       useAsPreset: false,
     };
@@ -73,6 +80,7 @@ function getFormDefaultValues(experiment?: LFAExperiment): FormValues {
   return {
     name: experiment.name,
     deckLayoutId: experiment.deckLayoutId,
+    assayPlateConfigId: experiment.assayPlateConfigId,
     numReplicates: experiment.numReplicates,
     useAsPreset: experiment.useAsPreset || false,
   };
@@ -86,7 +94,6 @@ export function LFAExperimentForm({
   mode,
 }: LFAExperimentFormProps) {
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [previewLayout, setPreviewLayout] = useState<LFADeckLayout | null>(null);
   const { role } = useAuth();
 
   const form = useForm<FormValues>({
@@ -98,10 +105,23 @@ export function LFAExperimentForm({
   const { data: deckLayouts = [] } = useQuery({
     queryKey: ['lfa-deck-layouts'],
     queryFn: async () => {
-      const response = await axios.get<LFADeckLayout[]>('/settings/lfa/deck-layouts');
+      const response = await axios.get<LFADeckLayout[]>('/experiments/lfa/deck-layouts');
       return response.data;
     },
   });
+
+  // Query to fetch assay plate configurations
+  const { data: assayPlateConfigs = [] } = useQuery({
+    queryKey: ['lfa-assay-plate-configs'],
+    queryFn: async () => {
+      const response = await axios.get<AssayPlateConfig[]>('/experiments/lfa/assay-plate-configs');
+      return response.data;
+    },
+  });
+
+  const [assayConfigId, deckLayoutId] = form.watch(['assayPlateConfigId', 'deckLayoutId']);
+  const selectedAssayConfig = assayPlateConfigs?.find((c) => c.id === assayConfigId) || null;
+  const selectedDeckLayout = deckLayouts?.find((l) => l.id === deckLayoutId) || null;
 
   function onFormSubmit(data: FormValues) {
     const isDirty = values(form.formState.dirtyFields).some((dirty) => dirty);
@@ -144,8 +164,8 @@ export function LFAExperimentForm({
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Deck Layout</FormLabel>
-              <div className="flex items-center gap-2">
-                <FormControl>
+              <FormControl>
+                <div className="flex items-center gap-6">
                   <Select
                     value={field.value}
                     onValueChange={(value) => {
@@ -163,22 +183,21 @@ export function LFAExperimentForm({
                       ))}
                     </SelectContent>
                   </Select>
-                </FormControl>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="ml-auto"
-                  onClick={() => {
-                    const layout = deckLayouts.find((l) => l.id === field.value);
-                    if (layout) {
-                      setPreviewLayout(layout);
-                    }
-                  }}
-                >
-                  Preview
-                </Button>
-              </div>
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Presentation
+                        className={cn(
+                          'h-4 w-4 cursor-help text-muted-foreground',
+                          !selectedDeckLayout && 'hidden'
+                        )}
+                      />
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-max">
+                      {selectedDeckLayout && <DeckLayoutPreview layout={selectedDeckLayout} />}
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+              </FormControl>
               <FormDescription
                 className={cn(
                   'transition-colors duration-200',
@@ -188,6 +207,98 @@ export function LFAExperimentForm({
                 )}
               >
                 Select a deck layout to use for this experiment.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Assay Plate Configuration Field */}
+        <FormField
+          control={form.control}
+          name="assayPlateConfigId"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Assay Plate Configuration</FormLabel>
+              <FormControl>
+                <div className="flex items-center gap-6">
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select an assay plate configuration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assayPlateConfigs.map((config) => (
+                        <SelectItem key={config.id} value={config.id}>
+                          {config.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Presentation
+                        className={cn(
+                          'h-4 w-4 cursor-help text-muted-foreground',
+                          !selectedAssayConfig && 'hidden'
+                        )}
+                      />
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-max">
+                      {selectedAssayConfig && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium">{selectedAssayConfig.name}</h4>
+                          {selectedAssayConfig.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {selectedAssayConfig.description}
+                            </p>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <p className="font-medium">Plate Prefix</p>
+                              <p className="text-muted-foreground">
+                                {selectedAssayConfig.assayPlatePrefix}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Device Type</p>
+                              <p className="text-muted-foreground">
+                                {selectedAssayConfig.deviceType}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Plates</p>
+                              <p className="text-muted-foreground">
+                                {selectedAssayConfig.numPlates}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-medium">Dimension (rows x cols)</p>
+                              <p className="text-muted-foreground">
+                                {selectedAssayConfig.numRows} × {selectedAssayConfig.numColumns}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+              </FormControl>
+              <FormDescription
+                className={cn(
+                  'transition-colors duration-200',
+                  focusedField === 'assayPlateConfigId'
+                    ? 'text-muted-foreground'
+                    : 'text-muted-foreground/50'
+                )}
+              >
+                Select an assay plate configuration for this experiment.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -252,18 +363,6 @@ export function LFAExperimentForm({
           </Button>
         </div>
       </form>
-
-      <Dialog
-        open={previewLayout !== null}
-        onOpenChange={(open) => !open && setPreviewLayout(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{previewLayout?.name}</DialogTitle>
-          </DialogHeader>
-          {previewLayout && <DeckLayoutPreview layout={previewLayout} />}
-        </DialogContent>
-      </Dialog>
     </Form>
   );
 }

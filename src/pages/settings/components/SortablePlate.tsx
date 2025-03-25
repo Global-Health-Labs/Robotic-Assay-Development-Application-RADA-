@@ -1,7 +1,9 @@
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { PlateDescriptor, PlateItem, WellCount } from '@/types/plate.types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { InfoIcon } from 'lucide-react';
 import { useEffect } from 'react';
 
 const WELL_COUNT_OPTIONS: WellCount[] = [1, 96, 384];
@@ -82,17 +84,38 @@ export default function SortablePlate({
             ))}
           </select>
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id={`empty-${plate.id}`}
-            checked={plate.isEmpty}
-            onChange={(e) => onSetEmpty(plate.id, e.target.checked)}
-            className="h-4 w-4"
-          />
-          <label htmlFor={`empty-${plate.id}`} className="text-xs">
-            Set Empty
-          </label>
+        <div className="flex items-start justify-between">
+          <div className="flex flex-1 flex-col">
+            <Input
+              type="text"
+              value={plate.holdoverVolumeFactor || '1'}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value) && value > 0) {
+                  onUpdatePlate(plate.id, { holdoverVolumeFactor: value });
+                }
+              }}
+              placeholder="Holdover Volume Factor"
+              className="h-7 max-w-48 text-xs"
+              disabled={plate.isEmpty}
+            />
+            <div className="text-xs text-muted-foreground">
+              <small>Holdover Volume Factor</small>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`empty-${plate.id}`}
+              checked={plate.isEmpty}
+              onChange={(e) => onSetEmpty(plate.id, e.target.checked)}
+              className="h-4 w-4"
+            />
+            <label htmlFor={`empty-${plate.id}`} className="text-xs">
+              Set Empty
+            </label>
+          </div>
         </div>
       </div>
     </div>

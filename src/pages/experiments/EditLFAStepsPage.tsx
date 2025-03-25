@@ -47,7 +47,7 @@ export default function EditLFAStepsPage() {
   };
 
   return (
-    <div className="py-4 md:py-10">
+    <div className="max-w-5xl py-4 md:py-10">
       {isLoading ? (
         <div>Loading...</div>
       ) : (

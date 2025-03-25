@@ -1,6 +1,7 @@
 import { PlateItem } from '@/types/plate.types';
 
 export type PlateLocation = {
+  name: string;
   dx: number;
   dz: number;
 };
@@ -22,8 +23,6 @@ export type LFADeckLayout = {
   name: string;
   description?: string;
   platePositions: PlateItem[];
-  assayPlateConfigId: string;
-  assayPlateConfig: AssayPlateConfig;
   createdAt: string;
   updatedAt: string;
   creator?: {

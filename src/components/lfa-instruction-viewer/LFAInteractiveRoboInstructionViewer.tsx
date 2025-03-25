@@ -60,7 +60,11 @@ const LFAInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {
           </div>
         </div>
       </div>
-      <LFADeckLayout deckLayout={experiment.deckLayout} selectedPlate={selectedPlate as string} />
+      <LFADeckLayout
+        deckLayout={experiment.deckLayout}
+        selectedPlate={selectedPlate as string}
+        assayPlateConfig={experiment.assayPlateConfig}
+      />
     </div>
   );
 };

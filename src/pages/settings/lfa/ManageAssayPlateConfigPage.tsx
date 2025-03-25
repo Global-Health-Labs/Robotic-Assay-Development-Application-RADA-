@@ -1,6 +1,6 @@
 import { createLFAConfig, getLFAConfigs, updateLFAConfig } from '@/api/lfa-settings.api';
 import { Button } from '@/components/ui/button';
-import { AssayPlateConfig } from '@/types/lfa.types';
+import { AssayPlateConfig, PlateLocation } from '@/types/lfa.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -10,24 +10,22 @@ import {
   ConfigFormValues,
 } from '../components/AssayPlateConfigurationForm';
 
-function LocationsTable({ locations }: { locations: { dx: number; dz: number }[] }) {
+function LocationsTable({ locations }: { locations: PlateLocation[] }) {
   if (locations.length === 0) {
     return <div className="text-sm text-muted-foreground">No locations defined</div>;
   }
 
   return (
     <div className="mt-4 text-sm">
-      <span className="font-medium">Locations</span>
-      <div className="mt-2 grid grid-cols-2 gap-x-8 gap-y-2">
-        <div className="grid grid-cols-2 font-medium">
-          <div>DX</div>
-          <div>DZ</div>
-        </div>
-        <div /> {/* Empty div for alignment */}
+      <span className="text-base font-medium">Locations</span>
+      <div className="mt-2 flex flex-wrap gap-12">
         {locations.map((loc, index) => (
-          <div key={index} className="grid grid-cols-2">
-            <div>{loc.dx}</div>
-            <div>{loc.dz}</div>
+          <div key={index} className="flex flex-col gap-1">
+            <div className="font-medium text-muted-foreground">{loc.name}</div>
+            <div className="flex gap-4 text-xs">
+              <span>DX: {loc.dx}</span>
+              <span>DZ: {loc.dz}</span>
+            </div>
           </div>
         ))}
       </div>

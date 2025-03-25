@@ -1,5 +1,5 @@
 import { Experiment, PaginatedResponse } from '@/api/experiment.type';
-import { LFADeckLayout } from '@/types/lfa.types';
+import { AssayPlateConfig, LFADeckLayout } from '@/types/lfa.types';
 import { useQuery } from '@tanstack/react-query';
 import axios from './axios';
 
@@ -17,6 +17,7 @@ export type NewLFAExperiment = {
   name: string;
   numReplicates: number;
   deckLayoutId: string;
+  assayPlateConfigId: string;
   type: 'LFA';
   useAsPreset?: boolean;
 };
@@ -32,6 +33,7 @@ export type LFAExperiment = {
 
 export type LFAExperimentWithDeckLayout = LFAExperiment & {
   deckLayout: LFADeckLayout;
+  assayPlateConfig: AssayPlateConfig;
 };
 
 export type LFARoboInstruction = {

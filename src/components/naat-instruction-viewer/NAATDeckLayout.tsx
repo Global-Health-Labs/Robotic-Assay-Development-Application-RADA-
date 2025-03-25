@@ -1,7 +1,8 @@
 import { NAATDeckLayout as NAATDeckLayoutType } from '@/api/naat-experiments.api';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface Props {
   selectedPlate: string;
@@ -10,6 +11,15 @@ interface Props {
 
 export const NAATDeckLayout: FC<Props> = ({ selectedPlate, deckLayout }) => {
   const layout = deckLayout;
+
+  useEffect(() => {
+    const isPlateFound = layout.platePositions.some(
+      (plate) => plate.name.toLowerCase() === selectedPlate.toLowerCase()
+    );
+    if (!isPlateFound) {
+      toast.error(`The plate ${selectedPlate} was not found in the deck layout.`);
+    }
+  }, [layout, selectedPlate]);
 
   const renderPlateColumn = (column: number) => {
     const numCols = 3;
