@@ -1,4 +1,4 @@
-import { NAATExperiment, Mastermix } from '@/api/naat-experiments.api';
+import { NAATExperiment, Mastermix, NAATExperimentWithMastermix } from '@/api/naat-experiments.api';
 import {
   SourceKeyPair,
   VolumeSourcePair,
@@ -29,7 +29,7 @@ import * as wl from './WorklistCalculation';
  */
 export const getMastermixWorklistData = (
   listOfMastermixes: Mastermix[],
-  experimentalPlanData: NAATExperiment[],
+  experimentalPlanData: NAATExperimentWithMastermix[],
   generateAllData: boolean
 ): WorklistData[] => {
   const data: WorklistData[] = [];

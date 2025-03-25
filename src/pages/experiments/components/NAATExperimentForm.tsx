@@ -21,9 +21,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/context/AuthContext';
+import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 import { cn } from '@/lib/utils';
 import { DeckLayoutPreview } from '@/pages/experiments/components/DeckLayoutPreview';
-import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { values } from 'lodash-es';
@@ -139,7 +139,7 @@ export function NAATExperimentForm({
 }: ExperimentFormProps) {
   const { role } = useAuth();
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const { data: liquidTypes, isLoading: isLoadingLiquidTypes } = useNAATLiquidTypes();
+  const { data: liquidTypes } = useNAATLiquidTypes();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

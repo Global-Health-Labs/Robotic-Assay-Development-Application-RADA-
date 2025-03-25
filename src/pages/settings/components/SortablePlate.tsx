@@ -3,7 +3,6 @@ import { cn } from '@/lib/utils';
 import { PlateDescriptor, PlateItem, WellCount } from '@/types/plate.types';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { InfoIcon } from 'lucide-react';
 import { useEffect } from 'react';
 
 const WELL_COUNT_OPTIONS: WellCount[] = [1, 96, 384];

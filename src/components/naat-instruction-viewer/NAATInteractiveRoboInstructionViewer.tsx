@@ -1,4 +1,4 @@
-import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
+import { NAATExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { FC, useState } from 'react';
 import { NAATDeckLayout } from './NAATDeckLayout';
 import { InstructionDetails } from './InstructionDetails';
@@ -8,7 +8,7 @@ import { SelectedExperimentalPlanRow, SelectedState } from './types';
 import { plateIdToName } from '@/components/naat-instruction-viewer/plate.util';
 
 interface Props {
-  experiment: ExperimentWithMastermix;
+  experiment: NAATExperimentWithMastermix;
 }
 
 const NAATInteractiveRoboInstructionViewer: FC<Props> = ({ experiment }) => {

@@ -1,4 +1,4 @@
-import { ExperimentWithMastermix, Mastermix } from '@/api/naat-experiments.api';
+import { NAATExperimentWithMastermix, Mastermix } from '@/api/naat-experiments.api';
 import { uniqBy } from 'lodash-es';
 import { v4 as uuidv4 } from 'uuid';
 import { getMastermixWorklistData } from './generateMastermixWorklist';
@@ -21,7 +21,7 @@ interface InstructionData {
  */
 export const getInstructionData = (
   listOfMastermixes: Mastermix[],
-  experimentalPlanData: ExperimentWithMastermix[]
+  experimentalPlanData: NAATExperimentWithMastermix[]
 ): InstructionData[] => {
   const data: InstructionData[] = [];
 

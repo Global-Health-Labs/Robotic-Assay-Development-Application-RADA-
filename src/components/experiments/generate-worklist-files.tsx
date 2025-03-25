@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { CSVLink } from 'react-csv';
+import { Mastermix, NAATExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, FileText, Grid3x3, Table } from 'lucide-react';
+import { WorklistData } from '@/utils/experiment.types';
 import { getMastermixWorklistData } from '@/utils/generateMastermixWorklist';
 import { getSampleWorklistData } from '@/utils/generateSampleWorklist';
-import { NAATExperiment, Mastermix } from '@/api/naat-experiments.api';
-import { WorklistData } from '@/utils/experiment.types';
+import { Download, FileText, Grid3x3, Table } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CSVLink } from 'react-csv';
 import { Link } from 'react-router-dom';
 
 const FILE_NAME = {
@@ -18,7 +18,7 @@ const FILE_NAME = {
 const SPECIAL_CHAR_FILE = '*****-----*****';
 
 interface GenerateWorklistFilesProps {
-  experiment: NAATExperiment[];
+  experiment: NAATExperimentWithMastermix[];
   mastermixes: Mastermix[];
 }
 

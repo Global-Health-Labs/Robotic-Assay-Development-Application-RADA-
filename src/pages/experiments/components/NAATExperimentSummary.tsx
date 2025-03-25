@@ -1,10 +1,10 @@
-import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
+import { NAATExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dayjs from 'dayjs';
 import { ExperimentFiles } from './ExperimentFiles';
 import { useNAATLiquidTypes } from '@/hooks/useLiquidTypes';
 
-const NAATExperimentSummary: React.FC<{ experiment: ExperimentWithMastermix }> = ({
+const NAATExperimentSummary: React.FC<{ experiment: NAATExperimentWithMastermix }> = ({
   experiment,
 }) => {
   const { data: liquidTypes } = useNAATLiquidTypes();

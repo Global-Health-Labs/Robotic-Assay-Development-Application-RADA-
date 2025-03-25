@@ -1,5 +1,4 @@
 import axios from '@/api/axios';
-import { getLFAConfigs } from '@/api/lfa-settings.api';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,13 +12,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import SortablePlate from '@/pages/settings/components/SortablePlate';
 import {
@@ -50,7 +42,6 @@ interface LayoutEditorProps {
 const layoutFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
-  assayPlateConfigId: z.string().min(1, 'Assay Plate Configuration is required'),
 });
 
 type LayoutFormValues = z.infer<typeof layoutFormSchema>;
@@ -61,17 +52,11 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
     defaultValues: {
       name: layout?.name ?? '',
       description: layout?.description ?? '',
-      assayPlateConfigId: layout?.assayPlateConfigId ?? '',
     },
   });
   const [plates, setPlates] = useState<PlateItem[]>(layout?.platePositions ?? defaultPlates);
   const sensors = useSensors(useSensor(PointerSensor));
   const queryClient = useQueryClient();
-
-  const { data: assayPlateConfigs = [] } = useQuery({
-    queryKey: ['assayPlateConfigs'],
-    queryFn: getLFAConfigs,
-  });
 
   const createMutation = useMutation({
     mutationFn: async (
@@ -205,31 +190,6 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="assayPlateConfigId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Assay Plate Configuration</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a configuration" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {assayPlateConfigs.map((config) => (
-                      <SelectItem key={config.id} value={config.id}>
-                        {config.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <div className="flex flex-col gap-2">
             <Label>Plate Positions</Label>
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -304,11 +264,6 @@ export default function ManageLFADeckLayoutPage() {
                   <h3 className="text-lg font-semibold">{layout.name}</h3>
                   {layout.description && (
                     <p className="mt-1 text-sm text-muted-foreground">{layout.description}</p>
-                  )}
-                  {layout.assayPlateConfig && (
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Assay Plate Config: {layout.assayPlateConfig.name}
-                    </div>
                   )}
 
                   <div className="mt-2 text-xs text-muted-foreground">

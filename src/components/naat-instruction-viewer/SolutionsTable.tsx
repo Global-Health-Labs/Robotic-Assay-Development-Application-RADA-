@@ -1,4 +1,4 @@
-import { ExperimentWithMastermix } from '@/api/naat-experiments.api';
+import { NAATExperimentWithMastermix } from '@/api/naat-experiments.api';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
@@ -20,7 +20,7 @@ import {
 import { plateIdToName } from '@/components/naat-instruction-viewer/plate.util';
 
 interface Props {
-  experiment: ExperimentWithMastermix;
+  experiment: NAATExperimentWithMastermix;
   selectedState: SelectedState;
   onRowClick: (row: SelectedExperimentalPlanRow) => void;
   onPlateWellChange: (wellCount: number) => void;

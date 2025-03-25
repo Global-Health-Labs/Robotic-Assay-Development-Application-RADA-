@@ -67,7 +67,7 @@ export interface ExperimentMastermix {
   mastermixes: Mastermix[];
 }
 
-export type ExperimentWithMastermix = NAATExperiment & {
+export type NAATExperimentWithMastermix = NAATExperiment & {
   mastermixes: Mastermix[];
   deckLayout: NAATDeckLayout;
 };
@@ -85,7 +85,7 @@ export const getNAATExperiments = async (params: URLSearchParams) => {
 };
 
 export const getNAATExperiment = (id: string) =>
-  axios.get<ExperimentWithMastermix>(`/experiments/naat/${id}`).then((res) => res.data);
+  axios.get<NAATExperimentWithMastermix>(`/experiments/naat/${id}`).then((res) => res.data);
 
 export const createNAATExperiment = (data: NewNAATExperiment, presetId: string | null) =>
   axios.post<NAATExperiment>('/experiments/naat', { ...data, presetId }).then((res) => res.data);
