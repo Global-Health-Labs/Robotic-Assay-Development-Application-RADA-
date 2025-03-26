@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import SortablePlate from '@/pages/settings/components/SortablePlate';
+import LFASortablePlate from '@/pages/settings/lfa/LFASortablePlate';
 import {
   createDefaultPlates,
   generatePlateName,
@@ -196,7 +196,7 @@ function LayoutEditor({ layout, onClose }: LayoutEditorProps) {
               <SortableContext items={plates.map((plate) => plate.id)}>
                 <div className="grid grid-cols-3 gap-4">
                   {plates.map((plate) => (
-                    <SortablePlate
+                    <LFASortablePlate
                       key={plate.id}
                       plate={plate}
                       onSetEmpty={handleSetEmpty}

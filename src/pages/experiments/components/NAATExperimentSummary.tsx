@@ -44,10 +44,7 @@ const NAATExperimentSummary: React.FC<{ experiment: NAATExperimentWithMastermix 
               <h3 className="text-sm font-medium text-muted-foreground">Technical Replicates</h3>
               <p>{experiment.numOfTechnicalReplicates}</p>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">PCR Plate Size</h3>
-              <p>{experiment.pcrPlateSize}</p>
-            </div>
+            <div />
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">
                 Mastermix Volume per Reaction
@@ -59,6 +56,26 @@ const NAATExperimentSummary: React.FC<{ experiment: NAATExperimentWithMastermix 
                 Sample Volume per Reaction
               </h3>
               <p>{experiment.sampleVolumePerReaction} µL</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                AQ Step Mastermix Liquid Type
+              </h3>
+              <p>{getLiquidTypeName(experiment.aqStepMastermixLiquidType)}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                AQ Step Sample Liquid Type
+              </h3>
+              <p>{getLiquidTypeName(experiment.aqStepSampleLiquidType)}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Mixing Step Liquid Type</h3>
+              <p>{getLiquidTypeName(experiment.mixingStepLiquidType)}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">PCR Plate Size</h3>
+              <p>{experiment.pcrPlateSize}</p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Created At</h3>

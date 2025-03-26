@@ -1,3 +1,4 @@
+import { NAATDeckLayout } from '@/api/naat-experiments.api';
 import { getLiquidClass, getTipType } from './ExtractLiquidClass';
 
 /**
@@ -20,9 +21,12 @@ interface VolumeStep {
 export const getVolumeMastermix = (
   numOfSampleConcentrations: number,
   numOfTechnicalReplicates: number,
-  volPerReaction: number
+  volPerReaction: number,
+  holdOverVolumeFactor: number
 ): number => {
-  return numOfSampleConcentrations * numOfTechnicalReplicates * volPerReaction * 1.3;
+  return (
+    numOfSampleConcentrations * numOfTechnicalReplicates * volPerReaction * holdOverVolumeFactor
+  );
 };
 
 /**
@@ -33,9 +37,22 @@ export const getVolumeWorking = (
   numOfSampleConcentrations: number,
   numOfTechnicalReplicates: number,
   volPerReaction: number,
-  volSample: number
+  volSample: number,
+  holdOverVolumeFactor: number
 ): number => {
-  return numOfSampleConcentrations * numOfTechnicalReplicates * (volPerReaction + volSample) * 1.3;
+  return (
+    numOfSampleConcentrations *
+    numOfTechnicalReplicates *
+    (volPerReaction + volSample) *
+    holdOverVolumeFactor
+  );
+};
+
+export const getHoldOverVolumeFactor = (plateName: string, deckLayout: NAATDeckLayout): number => {
+  const plateConfig = deckLayout.platePositions.find(
+    (p) => p.name.toLowerCase() === plateName.toLowerCase()
+  );
+  return plateConfig?.holdoverVolumeFactor ?? 1;
 };
 
 /**

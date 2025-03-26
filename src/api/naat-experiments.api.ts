@@ -10,7 +10,8 @@ export type NewNAATExperiment = {
   mastermixVolumePerReaction: number;
   sampleVolumePerReaction: number;
   mixingStepLiquidType: string;
-  aqStepLiquidType: string;
+  aqStepMastermixLiquidType: string;
+  aqStepSampleLiquidType: string;
   pcrPlateSize: number;
   deckLayoutId: string;
   useAsPreset?: boolean;

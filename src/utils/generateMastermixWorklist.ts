@@ -1,4 +1,4 @@
-import { NAATExperiment, Mastermix, NAATExperimentWithMastermix } from '@/api/naat-experiments.api';
+import { Mastermix, NAATExperiment, NAATExperimentWithMastermix } from '@/api/naat-experiments.api';
 import {
   SourceKeyPair,
   VolumeSourcePair,
@@ -11,6 +11,7 @@ import { ALIQUOTING_MM, MIX_MM, VALUE } from '../config/worklist/DefaultValues';
 import {
   calcuateNumOfWells,
   calculateVolumeEachSource,
+  getHoldOverVolumeFactor,
   getVolume_uL,
   getVolume_uL_water,
   getVolumeMastermix,
@@ -50,17 +51,21 @@ export const getMastermixWorklistData = (
   } = experimentalPlanData[0];
 
   // Calculate volume of mastermix
+  const mixingStepPlate = MIX_MM.FROM_PLATE;
+  const holdOverVolumeFactor = getHoldOverVolumeFactor(mixingStepPlate, deckLayout);
   const volumeOfMastermix = getVolumeMastermix(
     numOfSampleConcentrations,
     numOfTechnicalReplicates,
-    mastermixVolumePerReaction
+    mastermixVolumePerReaction,
+    holdOverVolumeFactor
   );
 
   const volumeWorking = getVolumeWorking(
     numOfSampleConcentrations,
     numOfTechnicalReplicates,
     mastermixVolumePerReaction,
-    sampleVolumePerReaction
+    sampleVolumePerReaction,
+    holdOverVolumeFactor
   );
 
   const numOfWells = calcuateNumOfWells(volumeOfMastermix);
@@ -245,10 +250,7 @@ export const getMastermixWorklistData = (
         if (volumeSource.source.toLowerCase() === currentRowSource.toLowerCase()) {
           // Calculate max volume per well (practical 80%)
           const maxWellVolume = currentRowFromPlate === FROM_PLATE_DW ? 700 : 140;
-          const plateConfig = deckLayout.platePositions.find(
-            (p) => p.name.toLowerCase() === currentRowFromPlate.toLowerCase()
-          );
-          const holdOverVolumeFactor = plateConfig?.holdoverVolumeFactor ?? 1;
+          const holdOverVolumeFactor = getHoldOverVolumeFactor(currentRowFromPlate, deckLayout);
           maxNumOfWells = Math.ceil(
             (volumeSource.totalSourceVolumes * holdOverVolumeFactor) / maxWellVolume
           );
@@ -411,7 +413,7 @@ const generateAliquotingStep = (
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: masterMixVolumePerReaction,
-        liquid_class: ALIQUOTING_MM.getLiquidClass(experiment.aqStepLiquidType),
+        liquid_class: ALIQUOTING_MM.getLiquidClass(experiment.aqStepMastermixLiquidType),
         timer_delta: VALUE.COLUMN_F,
         source: ALIQUOTING_MM.SOURCE,
         step_index: VALUE.COLUMN_H,

@@ -67,7 +67,12 @@ const formSchema = z
         required_error: 'Liquid type is required',
       })
       .min(1, 'Liquid type is required'),
-    aqStepLiquidType: z
+    aqStepMastermixLiquidType: z
+      .string({
+        required_error: 'Liquid type is required',
+      })
+      .min(1, 'Liquid type is required'),
+    aqStepSampleLiquidType: z
       .string({
         required_error: 'Liquid type is required',
       })
@@ -126,7 +131,8 @@ const getFormDefaultValues = (experiment?: NAATExperiment): FormValues => {
     deckLayoutId: '',
     useAsPreset: false,
     mixingStepLiquidType: '',
-    aqStepLiquidType: '',
+    aqStepMastermixLiquidType: '',
+    aqStepSampleLiquidType: '',
   };
 };
 
@@ -398,6 +404,97 @@ export function NAATExperimentForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-8">
           <FormField
             control={form.control}
+            name="aqStepMastermixLiquidType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>AQ Step Mastermix Liquid Type</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    onOpenChange={(open) => {
+                      if (open) {
+                        setFocusedField('aqStepMastermixLiquidType');
+                      } else {
+                        setFocusedField(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select liquid type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {liquidTypes?.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'aqStepMastermixLiquidType'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Type of liquid used in the AQ step for mastermix worklist
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="aqStepSampleLiquidType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>AQ Step Sample Liquid Type</FormLabel>
+                <FormControl>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    onOpenChange={(open) => {
+                      if (open) {
+                        setFocusedField('aqStepSampleLiquidType');
+                      } else {
+                        setFocusedField(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select sample worklist liquid type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {liquidTypes?.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription
+                  className={cn(
+                    'transition-colors duration-200',
+                    focusedField === 'aqStepSampleLiquidType'
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50'
+                  )}
+                >
+                  Type of liquid used in the AQ step for sample worklist
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:gap-8 md:grid-cols-2">
+          <FormField
+            control={form.control}
             name="mixingStepLiquidType"
             render={({ field }) => (
               <FormItem>
@@ -443,29 +540,31 @@ export function NAATExperimentForm({
 
           <FormField
             control={form.control}
-            name="aqStepLiquidType"
+            name="pcrPlateSize"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>AQ Step Liquid Type</FormLabel>
+                <FormLabel>PCR Plate Size</FormLabel>
                 <FormControl>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                     onOpenChange={(open) => {
                       if (open) {
-                        setFocusedField('aqStepLiquidType');
+                        setFocusedField('pcrPlateSize');
                       } else {
                         setFocusedField(null);
                       }
                     }}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select liquid type" />
-                    </SelectTrigger>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select plate size" />
+                      </SelectTrigger>
+                    </FormControl>
                     <SelectContent>
-                      {liquidTypes?.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.displayName}
+                      {PCR_PLATE_SIZES.map((size) => (
+                        <SelectItem key={size} value={size}>
+                          {size} wells
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -474,65 +573,18 @@ export function NAATExperimentForm({
                 <FormDescription
                   className={cn(
                     'transition-colors duration-200',
-                    focusedField === 'aqStepLiquidType'
+                    focusedField === 'pcrPlateSize'
                       ? 'text-muted-foreground'
                       : 'text-muted-foreground/50'
                   )}
                 >
-                  Type of liquid used in the AQ step
+                  Select the number of well plates that best fit your experiment
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="pcrPlateSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>PCR Plate Size</FormLabel>
-              <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  onOpenChange={(open) => {
-                    if (open) {
-                      setFocusedField('pcrPlateSize');
-                    } else {
-                      setFocusedField(null);
-                    }
-                  }}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select plate size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {PCR_PLATE_SIZES.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size} wells
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormDescription
-                className={cn(
-                  'transition-colors duration-200',
-                  focusedField === 'pcrPlateSize'
-                    ? 'text-muted-foreground'
-                    : 'text-muted-foreground/50'
-                )}
-              >
-                Select the number of well plates that best fit your experiment
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         {role === 'admin' && (
           <FormField

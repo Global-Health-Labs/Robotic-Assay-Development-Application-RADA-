@@ -34,21 +34,22 @@ export const getSampleWorklistData = (
   listOfMastermixes: Mastermix[],
   experimentalPlanData: NAATExperiment[]
 ): WorklistData[] => {
+  const experiment = experimentalPlanData[0];
   const data: WorklistData[] = [];
   const totalNumOfMastermixes = listOfMastermixes.length;
-  const plateSize = Number(experimentalPlanData[0].pcrPlateSize); // 96 or 364
+  const plateSize = Number(experiment.pcrPlateSize); // 96 or 364
   let groupNumber = 1;
   let toWell = 1;
   let fromWell = 1;
   let countRow = 0;
 
   // Get total wells per mastermix (the result will determine how many rows to include in the worklist file)
-  const numOfSampleConcentration = experimentalPlanData[0].numOfSampleConcentrations;
+  const numOfSampleConcentration = experiment.numOfSampleConcentrations;
   const totalWellsPerMastermix = getTotalWellsPerMastermix(
     numOfSampleConcentration,
-    experimentalPlanData[0].numOfTechnicalReplicates
+    experiment.numOfTechnicalReplicates
   );
-  const sampleVolumePerReaction_uL = experimentalPlanData[0].sampleVolumePerReaction;
+  const sampleVolumePerReaction_uL = experiment.sampleVolumePerReaction;
 
   // Create list of source based on number of sample concentrations
   const listOfSources = Array.from(
@@ -75,7 +76,7 @@ export const getSampleWorklistData = (
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: sampleVolumePerReaction_uL,
-        liquid_class: SAMPLE_MM.LIQUID_CLASS,
+        liquid_class: SAMPLE_MM.getLiquidClass(experiment.aqStepSampleLiquidType),
         timer_delta: VALUE.COLUMN_F,
         source: sampleListOfSources[countRow - 1],
         step_index: VALUE.COLUMN_H,

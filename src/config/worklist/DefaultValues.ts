@@ -31,8 +31,8 @@ interface MixMM {
 }
 
 interface SampleMM {
+  getLiquidClass: (liquidType: string) => string;
   STEP: string;
-  LIQUID_CLASS: string;
   ASP_MIXING: number;
   DISPENSE_TYPE: string;
   TIP_TYPE: number;
@@ -82,8 +82,8 @@ export const MIX_MM: MixMM = {
 
 // Default values for sample worklist
 export const SAMPLE_MM: SampleMM = {
+  getLiquidClass: (liquidType: string) => `RoboNAAT_tip50_${liquidType}_SurfaceEmpty`,
   STEP: 'template',
-  LIQUID_CLASS: 'RoboNAAT_tip50_template_SurfaceEmpty',
   ASP_MIXING: 0,
   DISPENSE_TYPE: 'Surface_Empty',
   TIP_TYPE: 50,

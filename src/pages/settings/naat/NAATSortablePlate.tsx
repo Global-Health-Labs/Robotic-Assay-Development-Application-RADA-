@@ -103,7 +103,7 @@ export default function SortablePlate({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pt-1.5">
             <input
               type="checkbox"
               id={`empty-${plate.id}`}
