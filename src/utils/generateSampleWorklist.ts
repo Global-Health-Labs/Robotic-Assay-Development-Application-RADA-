@@ -76,7 +76,10 @@ export const getSampleWorklistData = (
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: sampleVolumePerReaction_uL,
-        liquid_class: SAMPLE_MM.getLiquidClass(experiment.aqStepSampleLiquidType),
+        liquid_class: SAMPLE_MM.getLiquidClass(
+          experiment.aqStepSampleLiquidType,
+          sampleVolumePerReaction_uL
+        ),
         timer_delta: VALUE.COLUMN_F,
         source: sampleListOfSources[countRow - 1],
         step_index: VALUE.COLUMN_H,

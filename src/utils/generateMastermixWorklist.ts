@@ -351,7 +351,7 @@ const generateMixingSteps = (
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: volume,
-        liquid_class: MIX_MM.getLiquidClass(experiment.mixingStepLiquidType),
+        liquid_class: MIX_MM.getLiquidClass(experiment.mixingStepLiquidType, volume),
         timer_delta: VALUE.COLUMN_F,
         source: MIX_MM.SOURCE,
         step_index: VALUE.COLUMN_H,
@@ -413,7 +413,10 @@ const generateAliquotingStep = (
         dx: VALUE.COLUMN_B,
         dz: VALUE.COLUMN_C,
         volume_uL: masterMixVolumePerReaction,
-        liquid_class: ALIQUOTING_MM.getLiquidClass(experiment.aqStepMastermixLiquidType),
+        liquid_class: ALIQUOTING_MM.getLiquidClass(
+          experiment.aqStepMastermixLiquidType,
+          masterMixVolumePerReaction
+        ),
         timer_delta: VALUE.COLUMN_F,
         source: ALIQUOTING_MM.SOURCE,
         step_index: VALUE.COLUMN_H,

@@ -12,7 +12,7 @@ interface DefaultValue {
 }
 
 interface AliquotingMM {
-  getLiquidClass: (liquidType: string) => string;
+  getLiquidClass: (liquidType: string, volume: number) => string;
   SOURCE: string;
   ASP_MIXING: number;
   DISPENSE_TYPE: string;
@@ -21,7 +21,7 @@ interface AliquotingMM {
 }
 
 interface MixMM {
-  getLiquidClass: (liquidType: string) => string;
+  getLiquidClass: (liquidType: string, volume: number) => string;
   SOURCE: string;
   ASP_MIXING: number;
   DISPENSE_TYPE: string;
@@ -31,7 +31,7 @@ interface MixMM {
 }
 
 interface SampleMM {
-  getLiquidClass: (liquidType: string) => string;
+  getLiquidClass: (liquidType: string, volume: number) => string;
   STEP: string;
   ASP_MIXING: number;
   DISPENSE_TYPE: string;
@@ -56,9 +56,19 @@ export const VALUE: DefaultValue = {
   // COLUMN_R: 'ivl_96_dw_v1_0002',
 };
 
+const getLiquidClass = (liquidType: string, volume: number) => {
+  if (volume <= 50) {
+    return `RoboNAAT_tip50_${liquidType}_DispenseSurface_Empty`;
+  }
+  if (volume <= 300) {
+    return `RoboNAAT_tip300_${liquidType}_DispenseSurface_Empty`;
+  }
+  return `RoboNAAT_HighVolume_${liquidType}_DispenseSurface_Empty`;
+};
+
 // Default values during aliquoting mastermix step
 export const ALIQUOTING_MM: AliquotingMM = {
-  getLiquidClass: (liquidType: string) => `RoboNAAT_HighVolume_${liquidType}_DispenseSurface_Empty`,
+  getLiquidClass: (liquidType: string, volume: number) => getLiquidClass(liquidType, volume),
   SOURCE: 'MM_aq',
   ASP_MIXING: 0,
   DISPENSE_TYPE: 'Jet_Empty',
@@ -69,7 +79,7 @@ export const ALIQUOTING_MM: AliquotingMM = {
 
 // Default values during mixing mastermix step
 export const MIX_MM: MixMM = {
-  getLiquidClass: (liquidType: string) => `RoboNAAT_HighVolume_${liquidType}_DispenseSurface_Empty`,
+  getLiquidClass: (liquidType: string, volume: number) => getLiquidClass(liquidType, volume),
   SOURCE: 'mixing',
   ASP_MIXING: 10,
   DISPENSE_TYPE: 'Surface_Empty',
