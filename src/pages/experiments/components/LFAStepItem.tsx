@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
-import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -55,6 +56,15 @@ export function LFAStepItem({
 
   const liquidClass = watch(`steps.${index}.liquidClass`);
   const isImaging = liquidClass === 'imaging';
+  
+  // State for time independent checkbox
+  const [isTimeIndependent, setIsTimeIndependent] = useState(false);
+  
+  // Initialize isTimeIndependent based on time value
+  useEffect(() => {
+    const timeValue = control._formValues?.steps?.[index]?.time;
+    setIsTimeIndependent(timeValue === -1);
+  }, [control._formValues?.steps, index]);
 
   // Initialize sources from form value
   useEffect(() => {
@@ -85,7 +95,17 @@ export function LFAStepItem({
     if (isImaging) {
       setValue(`steps.${index}.volume`, 0);
     }
-  }, [isImaging, setValue]);
+  }, [isImaging, setValue, index]);
+  
+  // Handle time independent checkbox change
+  const handleTimeIndependentChange = (checked: boolean) => {
+    setIsTimeIndependent(checked);
+    if (checked) {
+      setValue(`steps.${index}.time`, -1);
+    } else {
+      setValue(`steps.${index}.time`, 0); // Reset to default value
+    }
+  };
 
   // Process input string and add sources
   const addSource = () => {
@@ -293,22 +313,40 @@ export function LFAStepItem({
           )}
         />
 
-        <FormField
-          control={control}
-          name={`steps.${index}.time`}
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <FormField
+            control={control}
+            name={`steps.${index}.time`}
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    disabled={isTimeIndependent}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          {/* Time Independent Checkbox */}
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id={`time-independent-${index}`} 
+              checked={isTimeIndependent}
+              onCheckedChange={handleTimeIndependentChange}
+            />
+            <label 
+              htmlFor={`time-independent-${index}`}
+              className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              This step is time independent
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Sources Section */}
