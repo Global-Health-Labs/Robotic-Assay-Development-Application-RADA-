@@ -129,7 +129,6 @@ export const calculateVolumeEachSource = (
   finalConcentration: number,
   stockConcentration: number
 ): number => {
-  console.log('Volume mastermix', volumeMastermix * (finalConcentration / stockConcentration));
   // Assume that final concentration and stock concentration have the same unit
   return volumeMastermix * (finalConcentration / stockConcentration); // in uL
 };

@@ -17,8 +17,6 @@ const instance = axios.create({
   withCredentials: true,
 });
 
-console.log('API Base URL', backendUrl);
-
 instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (!config.url?.endsWith('/auth/login') && config.withCredentials !== false) {
     const token = localStorage.getItem('token');

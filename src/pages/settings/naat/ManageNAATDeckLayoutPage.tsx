@@ -250,7 +250,7 @@ const ManageNAATDeckLayoutPage: React.FC = () => {
   const { data: layouts } = useQuery({
     queryKey: ['deck-layouts'],
     queryFn: async () => {
-      const response = await axios.get('/settings/naat/deck-layouts');
+      const response = await axios.get('/experiments/naat/deck-layouts');
       return response.data as DeckLayout[];
     },
   });

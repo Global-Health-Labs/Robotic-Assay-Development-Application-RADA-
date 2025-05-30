@@ -22,19 +22,10 @@ interface DataTablePaginationProps<TData> {
 
 export function DataTablePagination<TData>({ table, totalRows }: DataTablePaginationProps<TData>) {
   const { pagination } = table.getState();
-  console.log('pagination', pagination);
   const { pageIndex, pageSize } = pagination;
 
   // Calculate total pages based on total rows
   const pageCount = totalRows ? Math.ceil(totalRows / pageSize) : table.getPageCount();
-
-  console.log('DataTablePagination:', {
-    totalRows,
-    pageSize,
-    pageIndex,
-    pageCount,
-    pagination: table.getState().pagination,
-  });
 
   const selectedRows = table.getFilteredSelectedRowModel().rows.length;
 

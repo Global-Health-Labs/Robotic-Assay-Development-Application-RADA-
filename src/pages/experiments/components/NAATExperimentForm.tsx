@@ -178,7 +178,7 @@ export function NAATExperimentForm({
   const { data: deckLayouts = [] } = useQuery({
     queryKey: ['naat-deck-layouts'],
     queryFn: async () => {
-      const response = await axios.get<NAATDeckLayout[]>('/settings/naat/deck-layouts');
+      const response = await axios.get<NAATDeckLayout[]>('/experiments/naat/deck-layouts');
       return response.data;
     },
   });

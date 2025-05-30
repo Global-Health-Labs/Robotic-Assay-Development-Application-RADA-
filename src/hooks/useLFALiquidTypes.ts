@@ -11,7 +11,7 @@ export type LFALiquidType = {
 };
 
 const fetchLFALiquidTypes = async (): Promise<LFALiquidType[]> => {
-  const { data } = await axios.get<LFALiquidType[]>('/settings/lfa/liquid-types');
+  const { data } = await axios.get<LFALiquidType[]>('/experiments/lfa/liquid-types');
   return data;
 };
 

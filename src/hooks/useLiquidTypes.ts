@@ -12,7 +12,7 @@ export type LiquidType = {
 };
 
 const fetchLiquidTypes = async (): Promise<LiquidType[]> => {
-  const { data } = await axios.get<LiquidType[]>('/settings/naat/liquid-types');
+  const { data } = await axios.get<LiquidType[]>('/experiments/naat/liquid-types');
   return data;
 };
 

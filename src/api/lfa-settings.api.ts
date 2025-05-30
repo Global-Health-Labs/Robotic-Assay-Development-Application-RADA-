@@ -54,7 +54,7 @@ export async function deleteLFAConfig(id: string) {
 }
 
 export async function getLFALiquidTypes() {
-  const response = await axios.get<LFALiquidType[]>('/settings/lfa/liquid-types');
+  const response = await axios.get<LFALiquidType[]>('/experiments/lfa/liquid-types');
   return response.data;
 }
 
